@@ -18,6 +18,8 @@ interface ChessBoardProps {
   lastMove?: { from: string; to: string } | null;
   highlightSquares?: string[];
   pieceSet?: PieceSet;
+  lightSquareColor?: string;
+  darkSquareColor?: string;
 }
 
 // Helper to create a Chess960 game from FEN
@@ -63,7 +65,9 @@ export default function ChessBoard({
   id = "chess-board",
   lastMove = null,
   highlightSquares = [],
-  pieceSet = "alpha"
+  pieceSet = "alpha",
+  lightSquareColor = "#d4dde8",
+  darkSquareColor = "#5d7a99"
 }: ChessBoardProps) {
   const [selectedSquare, setSelectedSquare] = useState<Square | null>(null);
   const [legalMoves, setLegalMoves] = useState<Square[]>([]);
@@ -301,8 +305,8 @@ export default function ChessBoard({
         onPieceDragEnd={handlePieceDragEnd}
         arePiecesDraggable={arePiecesDraggable}
         boardOrientation={orientation}
-        customDarkSquareStyle={{ backgroundColor: '#5d7a99' }}
-        customLightSquareStyle={{ backgroundColor: '#d4dde8' }}
+        customDarkSquareStyle={{ backgroundColor: darkSquareColor }}
+        customLightSquareStyle={{ backgroundColor: lightSquareColor }}
         customBoardStyle={{
           borderRadius: '4px',
         }}

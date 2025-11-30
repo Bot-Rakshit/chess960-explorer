@@ -95,6 +95,21 @@ export default function ChallengePage() {
   const [bestStreak, setBestStreak] = useState(0);
   const [totalPlayed, setTotalPlayed] = useState(0);
 
+  // Load best streak from localStorage
+  useEffect(() => {
+    const saved = localStorage.getItem("chess960-challenge-best");
+    if (saved) {
+      setBestStreak(parseInt(saved, 10));
+    }
+  }, []);
+
+  // Save best streak to localStorage
+  useEffect(() => {
+    if (bestStreak > 0) {
+      localStorage.setItem("chess960-challenge-best", bestStreak.toString());
+    }
+  }, [bestStreak]);
+
   useEffect(() => {
     Promise.all([
       fetch("/data/chess960.json").then((r) => r.json()),
@@ -215,123 +230,132 @@ export default function ChallengePage() {
       <main className="h-[calc(100vh-57px)] overflow-hidden">
         <div className="h-full flex flex-col lg:flex-row">
           {/* Left: Game Area */}
-          <div className="flex-1 flex flex-col items-center justify-center p-4 lg:p-6 overflow-y-auto">
+          <div className="flex-1 flex flex-col lg:flex-row items-center justify-center p-3 lg:p-4 gap-4 lg:gap-6 overflow-y-auto">
             {challenge && (
               <>
-                {/* Game Info + Question */}
-                <div className="text-center mb-4 lg:mb-6">
-                  <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-surface border border-white/10 mb-2">
-                    <span className="text-creme font-medium text-sm">{getPlayerSurname(challenge.game.white)}</span>
-                    <span className="text-creme-muted text-xs">vs</span>
-                    <span className="text-creme font-medium text-sm">{getPlayerSurname(challenge.game.black)}</span>
+                {/* Current Position - Left Side */}
+                <div className="flex flex-col items-center">
+                  <div className="text-center mb-3">
+                    <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-surface border border-white/10 mb-2">
+                      <span className="text-creme font-medium text-sm">{getPlayerSurname(challenge.game.white)}</span>
+                      <span className="text-creme-muted text-xs">vs</span>
+                      <span className="text-creme font-medium text-sm">{getPlayerSurname(challenge.game.black)}</span>
+                    </div>
+                    <div className="text-[10px] text-creme-muted">
+                      After <span className="text-amber-400 font-bold">{challenge.moveCount}</span> moves
+                    </div>
                   </div>
-                  <div className="text-[10px] text-creme-muted mb-2">
-                    {challenge.game.event} • {challenge.game.date}
-                  </div>
-                  <h2 className="text-sm lg:text-base text-creme">
-                    After <span className="text-amber-400 font-bold">{challenge.moveCount}</span> moves — which starting position?
-                  </h2>
-                </div>
-
-                {/* Current Position Board */}
-                <div className="w-full max-w-[280px] lg:max-w-[320px] mb-4 lg:mb-6">
-                  <div className="aspect-square rounded-xl overflow-hidden border-2 border-amber-500/30 shadow-lg shadow-amber-500/10">
-                    <ChessBoard
-                      fen={challenge.positionAfterMoves}
-                      arePiecesDraggable={false}
-                      id="current-position"
-                    />
+                  <div className="w-[260px] sm:w-[300px] lg:w-[340px] xl:w-[380px]">
+                    <div className="aspect-square rounded-xl overflow-hidden border-2 border-amber-500/30 shadow-lg shadow-amber-500/10">
+                      <ChessBoard
+                        fen={challenge.positionAfterMoves}
+                        arePiecesDraggable={false}
+                        id="current-position"
+                      />
+                    </div>
                   </div>
                 </div>
 
-                {/* Options */}
-                <div className="grid grid-cols-3 gap-2 lg:gap-4 w-full max-w-[400px] lg:max-w-[480px] mb-4">
-                  {challenge.options.map((option) => {
-                    const isSelected = selected === option.id;
-                    const isCorrect = option.id === challenge.correctPosition.id;
-                    const showCorrect = revealed && isCorrect;
-                    const showWrong = revealed && isSelected && !isCorrect;
+                {/* Options - Right Side */}
+                <div className="flex flex-col items-center gap-3">
+                  <div className="text-xs text-creme-muted">Which starting position?</div>
+                  <div className="grid grid-cols-3 lg:grid-cols-1 xl:grid-cols-3 gap-2 lg:gap-3">
+                    {challenge.options.map((option, idx) => {
+                      const isSelected = selected === option.id;
+                      const isCorrect = option.id === challenge.correctPosition.id;
+                      const showCorrect = revealed && isCorrect;
+                      const showWrong = revealed && isSelected && !isCorrect;
+                      
+                      const boardColors = [
+                        { light: "#e8dfd4", dark: "#99805d" },
+                        { light: "#d4e0e8", dark: "#5d8099" },
+                        { light: "#e2d4e8", dark: "#7a5d99" },
+                      ];
+                      const colors = boardColors[idx % 3];
 
-                    return (
+                      return (
+                        <button
+                          key={option.id}
+                          onClick={() => handleSelect(option.id)}
+                          disabled={revealed}
+                          className={`relative group transition-all duration-200 ${
+                            revealed ? "cursor-default" : "cursor-pointer hover:scale-[1.02]"
+                          }`}
+                        >
+                          <div
+                            className={`w-[100px] sm:w-[110px] lg:w-[130px] xl:w-[120px] aspect-square rounded-lg overflow-hidden border-2 transition-all duration-200 ${
+                              showCorrect
+                                ? "border-emerald-500 shadow-lg shadow-emerald-500/30"
+                                : showWrong
+                                ? "border-rose-500 shadow-lg shadow-rose-500/30"
+                                : isSelected
+                                ? "border-amber-500 shadow-lg shadow-amber-500/20"
+                                : "border-white/10 group-hover:border-white/30"
+                            }`}
+                          >
+                            <ChessBoard
+                              fen={option.fen}
+                              arePiecesDraggable={false}
+                              id={`option-${option.id}`}
+                              lightSquareColor={colors.light}
+                              darkSquareColor={colors.dark}
+                            />
+                          </div>
+                          <div
+                            className={`mt-1 text-[10px] lg:text-xs font-medium transition-colors text-center ${
+                              showCorrect
+                                ? "text-emerald-400"
+                                : showWrong
+                                ? "text-rose-400"
+                                : isSelected
+                                ? "text-amber-400"
+                                : "text-creme-muted group-hover:text-creme"
+                            }`}
+                          >
+                            #{option.id}
+                          </div>
+                          {showCorrect && (
+                            <div className="absolute -top-1 -right-1 w-5 h-5 lg:w-6 lg:h-6 rounded-full bg-emerald-500 flex items-center justify-center">
+                              <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                              </svg>
+                            </div>
+                          )}
+                          {showWrong && (
+                            <div className="absolute -top-1 -right-1 w-5 h-5 lg:w-6 lg:h-6 rounded-full bg-rose-500 flex items-center justify-center">
+                              <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M6 18L18 6M6 6l12 12" />
+                              </svg>
+                            </div>
+                          )}
+                        </button>
+                      );
+                    })}
+                  </div>
+
+                  {/* Action Button */}
+                  <div className="flex justify-center mt-2">
+                    {!revealed ? (
                       <button
-                        key={option.id}
-                        onClick={() => handleSelect(option.id)}
-                        disabled={revealed}
-                        className={`relative group transition-all duration-200 ${
-                          revealed ? "cursor-default" : "cursor-pointer hover:scale-[1.02]"
+                        onClick={handleReveal}
+                        disabled={selected === null}
+                        className={`px-5 py-2 rounded-lg font-semibold text-sm transition-all ${
+                          selected === null
+                            ? "bg-white/5 text-creme-muted cursor-not-allowed"
+                            : "bg-amber-500 text-black hover:bg-amber-400"
                         }`}
                       >
-                        <div
-                          className={`aspect-square rounded-lg overflow-hidden border-2 transition-all duration-200 ${
-                            showCorrect
-                              ? "border-emerald-500 shadow-lg shadow-emerald-500/30"
-                              : showWrong
-                              ? "border-rose-500 shadow-lg shadow-rose-500/30"
-                              : isSelected
-                              ? "border-amber-500 shadow-lg shadow-amber-500/20"
-                              : "border-white/10 group-hover:border-white/30"
-                          }`}
-                        >
-                          <ChessBoard
-                            fen={option.fen}
-                            arePiecesDraggable={false}
-                            id={`option-${option.id}`}
-                          />
-                        </div>
-                        <div
-                          className={`mt-1 text-[10px] lg:text-xs font-medium transition-colors ${
-                            showCorrect
-                              ? "text-emerald-400"
-                              : showWrong
-                              ? "text-rose-400"
-                              : isSelected
-                              ? "text-amber-400"
-                              : "text-creme-muted group-hover:text-creme"
-                          }`}
-                        >
-                          #{option.id}
-                        </div>
-                        {showCorrect && (
-                          <div className="absolute -top-1 -right-1 w-5 h-5 lg:w-6 lg:h-6 rounded-full bg-emerald-500 flex items-center justify-center">
-                            <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
-                            </svg>
-                          </div>
-                        )}
-                        {showWrong && (
-                          <div className="absolute -top-1 -right-1 w-5 h-5 lg:w-6 lg:h-6 rounded-full bg-rose-500 flex items-center justify-center">
-                            <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M6 18L18 6M6 6l12 12" />
-                            </svg>
-                          </div>
-                        )}
+                        Check
                       </button>
-                    );
-                  })}
-                </div>
-
-                {/* Action Button */}
-                <div className="flex justify-center">
-                  {!revealed ? (
-                    <button
-                      onClick={handleReveal}
-                      disabled={selected === null}
-                      className={`px-6 py-2.5 rounded-xl font-semibold text-sm transition-all ${
-                        selected === null
-                          ? "bg-white/5 text-creme-muted cursor-not-allowed"
-                          : "bg-amber-500 text-black hover:bg-amber-400"
-                      }`}
-                    >
-                      Check Answer
-                    </button>
-                  ) : (
-                    <button
-                      onClick={handleNext}
-                      className="px-6 py-2.5 rounded-xl font-semibold text-sm bg-amber-500 text-black hover:bg-amber-400 transition-all"
-                    >
-                      Next →
-                    </button>
-                  )}
+                    ) : (
+                      <button
+                        onClick={handleNext}
+                        className="px-5 py-2 rounded-lg font-semibold text-sm bg-amber-500 text-black hover:bg-amber-400 transition-all"
+                      >
+                        Next →
+                      </button>
+                    )}
+                  </div>
                 </div>
               </>
             )}
