@@ -6,7 +6,7 @@ const POSITIONS_PATH = path.join(__dirname, '../public/data/chess960.json');
 const OUTPUT_PATH = path.join(__dirname, '../public/data/chess960_sharpness.json');
 const LC0_PATH = '/opt/homebrew/bin/lc0';
 const NETWORK_PATH = path.join(__dirname, 'lc0-net/network.pb.gz');
-const NODES = 10000; // nodes per position
+const NODES = 5000; // nodes per position (~10s each)
 
 /**
  * Sharpness formula:
@@ -46,61 +46,55 @@ class Lc0Engine {
     this.resolveReady = null;
     this.currentResolve = null;
     this.wdl = null;
+    this.buffer = '';
   }
 
   start() {
     return new Promise((resolve, reject) => {
       this.process = spawn(LC0_PATH, [
         `--weights=${NETWORK_PATH}`,
-        '--verbose-move-stats',
-        '--UCI_Chess960=true',
       ]);
       
       this.resolveReady = resolve;
-      let buffer = '';
 
-      this.process.stdout.on('data', (data) => {
-        buffer += data.toString();
-        const lines = buffer.split('\n');
-        buffer = lines.pop(); // Keep incomplete line in buffer
+      const handleData = (data) => {
+        this.buffer += data.toString();
+        const lines = this.buffer.split('\n');
+        this.buffer = lines.pop();
         
         for (const line of lines) {
           this.handleLine(line.trim());
         }
-      });
+      };
 
-      this.process.stderr.on('data', (data) => {
-        // lc0 outputs info to stderr
-        const lines = data.toString().split('\n');
-        for (const line of lines) {
-          this.handleLine(line.trim());
-        }
-      });
+      this.process.stdout.on('data', handleData);
+      this.process.stderr.on('data', handleData);
 
       this.process.on('error', (err) => {
         reject(new Error(`Failed to start lc0: ${err.message}`));
       });
 
-      this.send('uci');
+      // Send UCI init - wait for metal backend to load
+      setTimeout(() => this.send('uci'), 500);
     });
   }
 
   send(cmd) {
-    if (this.process) {
+    if (this.process && this.process.stdin.writable) {
       this.process.stdin.write(cmd + '\n');
     }
   }
 
   handleLine(line) {
     if (line === 'uciok') {
+      this.send('setoption name UCI_ShowWDL value true');
       this.send('isready');
     } else if (line === 'readyok') {
       if (this.resolveReady) {
         this.resolveReady();
         this.resolveReady = null;
       }
-    } else if (line.includes('wdl')) {
-      // Parse WDL from info string: "info ... wdl 450 400 150 ..."
+    } else if (line.includes(' wdl ')) {
       const wdlMatch = line.match(/wdl\s+(\d+)\s+(\d+)\s+(\d+)/);
       if (wdlMatch) {
         this.wdl = {
@@ -121,7 +115,6 @@ class Lc0Engine {
     return new Promise((resolve) => {
       this.wdl = null;
       this.currentResolve = resolve;
-      this.send('ucinewgame');
       this.send(`position fen ${fen}`);
       this.send(`go nodes ${NODES}`);
     });
@@ -130,7 +123,7 @@ class Lc0Engine {
   quit() {
     if (this.process) {
       this.send('quit');
-      this.process.kill();
+      setTimeout(() => this.process.kill(), 100);
     }
   }
 }
