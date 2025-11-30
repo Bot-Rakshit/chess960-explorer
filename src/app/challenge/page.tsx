@@ -6,6 +6,8 @@ import { Chess } from "chessops/chess";
 import { parseFen, makeFen } from "chessops/fen";
 import { parseSan } from "chessops/san";
 import ChessBoard from "@/components/ChessBoard";
+import Header from "@/components/Header";
+import Loader from "@/components/Loader";
 
 interface GameData {
   pgn: string;
@@ -198,34 +200,12 @@ export default function ChallengePage() {
   };
 
   if (loading) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="text-creme-muted">Loading challenge...</div>
-      </div>
-    );
+    return <Loader fullScreen text="Loading challenge..." />;
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      {/* Header */}
-      <header className="border-b border-white/5 bg-surface/50 backdrop-blur-sm sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
-          <Link href="/" className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center text-white font-bold text-sm">
-              960
-            </div>
-            <span className="text-creme font-semibold hidden sm:block">Chess960 Explorer</span>
-          </Link>
-          <nav className="flex items-center gap-4">
-            <Link href="/explore" className="text-sm text-creme-muted hover:text-creme transition-colors">
-              Explore
-            </Link>
-            <Link href="/challenge" className="text-sm text-amber-400 font-medium">
-              Challenge
-            </Link>
-          </nav>
-        </div>
-      </header>
+    <div className="min-h-screen bg-background text-creme">
+      <Header />
 
       <main className="h-[calc(100vh-57px)] overflow-hidden">
         <div className="h-full flex flex-col lg:flex-row">
@@ -236,17 +216,17 @@ export default function ChallengePage() {
                 {/* Current Position */}
                 <div className="flex flex-col items-center">
                   <div className="text-center mb-4">
-                    <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-surface border border-white/10 mb-2">
-                      <span className="text-creme font-semibold">{getPlayerSurname(challenge.game.white)}</span>
-                      <span className="text-creme-muted">vs</span>
-                      <span className="text-creme font-semibold">{getPlayerSurname(challenge.game.black)}</span>
+                    <div className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-surface border border-white/10 mb-2">
+                      <span className="font-semibold">{getPlayerSurname(challenge.game.white)}</span>
+                      <span className="text-creme-muted/60">vs</span>
+                      <span className="font-semibold">{getPlayerSurname(challenge.game.black)}</span>
                     </div>
                     <div className="text-xs text-creme-muted/60">
                       {challenge.game.event} • {challenge.game.date}
                     </div>
                   </div>
                   <div className="w-[300px] sm:w-[360px] lg:w-[420px] xl:w-[480px]">
-                    <div className="aspect-square rounded-2xl overflow-hidden border-2 border-amber-500/30 shadow-xl shadow-amber-500/10">
+                    <div className="aspect-square rounded-xl overflow-hidden border border-white/10">
                       <ChessBoard
                         fen={challenge.positionAfterMoves}
                         arePiecesDraggable={false}
@@ -254,14 +234,14 @@ export default function ChallengePage() {
                       />
                     </div>
                     <div className="text-center mt-3 text-sm text-creme-muted">
-                      After <span className="text-amber-400 font-bold">{challenge.moveCount}</span> moves
+                      After <span className="text-accent font-semibold">{challenge.moveCount}</span> moves
                     </div>
                   </div>
                 </div>
 
                 {/* Options Panel */}
                 <div className="flex flex-col items-center">
-                  <div className="text-sm text-creme mb-4 font-medium">Which starting position?</div>
+                  <div className="text-sm text-creme-muted mb-4">Which starting position?</div>
                   <div className="flex flex-row lg:flex-col gap-3">
                     {challenge.options.map((option, idx) => {
                       const isSelected = selected === option.id;
@@ -281,21 +261,21 @@ export default function ChallengePage() {
                           key={option.id}
                           onClick={() => handleSelect(option.id)}
                           disabled={revealed}
-                          className={`relative group transition-all duration-200 flex items-center gap-3 p-2 rounded-xl ${
-                            revealed ? "cursor-default" : "cursor-pointer hover:bg-white/5"
-                          } ${isSelected && !revealed ? "bg-amber-500/10 ring-1 ring-amber-500/30" : ""}`}
+                          className={`relative group transition-all duration-200 flex items-center gap-3 p-2 rounded-lg ${
+                            revealed ? "cursor-default" : "cursor-pointer hover:bg-[#1a1a1a]"
+                          } ${isSelected && !revealed ? "bg-[#1a1a1a] ring-1 ring-amber-500/50" : ""}`}
                         >
                           <div
-                            className={`w-[100px] sm:w-[120px] lg:w-[140px] aspect-square rounded-xl overflow-hidden border-2 transition-all duration-300 ${
+                            className={`w-[100px] sm:w-[120px] lg:w-[140px] aspect-square rounded-lg overflow-hidden border transition-all duration-300 ${
                               !revealed ? "group-hover:w-[120px] sm:group-hover:w-[140px] lg:group-hover:w-[160px]" : ""
                             } ${
                               showCorrect
-                                ? "border-emerald-500 shadow-lg shadow-emerald-500/30"
+                                ? "border-green-500"
                                 : showWrong
-                                ? "border-rose-500 shadow-lg shadow-rose-500/30"
+                                ? "border-red-500"
                                 : isSelected
                                 ? "border-amber-500"
-                                : "border-white/10 group-hover:border-white/20"
+                                : "border-[#2a2a2a] group-hover:border-[#3a3a3a]"
                             }`}
                           >
                             <ChessBoard
@@ -307,27 +287,27 @@ export default function ChallengePage() {
                             />
                           </div>
                           <div
-                            className={`text-sm font-semibold transition-colors ${
+                            className={`text-sm font-medium transition-colors ${
                               showCorrect
-                                ? "text-emerald-400"
+                                ? "text-green-500"
                                 : showWrong
-                                ? "text-rose-400"
+                                ? "text-red-500"
                                 : isSelected
-                                ? "text-amber-400"
-                                : "text-creme-muted group-hover:text-creme"
+                                ? "text-amber-500"
+                                : "text-[#888] group-hover:text-white"
                             }`}
                           >
                             #{option.id}
                           </div>
                           {showCorrect && (
-                            <div className="absolute -top-1.5 -right-1.5 w-6 h-6 rounded-full bg-emerald-500 flex items-center justify-center shadow-lg">
+                            <div className="absolute -top-1.5 -right-1.5 w-6 h-6 rounded-full bg-green-500 flex items-center justify-center">
                               <svg className="w-3.5 h-3.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
                               </svg>
                             </div>
                           )}
                           {showWrong && (
-                            <div className="absolute -top-1.5 -right-1.5 w-6 h-6 rounded-full bg-rose-500 flex items-center justify-center shadow-lg">
+                            <div className="absolute -top-1.5 -right-1.5 w-6 h-6 rounded-full bg-red-500 flex items-center justify-center">
                               <svg className="w-3.5 h-3.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M6 18L18 6M6 6l12 12" />
                               </svg>
@@ -344,9 +324,9 @@ export default function ChallengePage() {
                       <button
                         onClick={handleReveal}
                         disabled={selected === null}
-                        className={`px-8 py-2.5 rounded-xl font-semibold transition-all ${
+                        className={`px-8 py-2.5 rounded-lg font-semibold transition-colors ${
                           selected === null
-                            ? "bg-white/5 text-creme-muted cursor-not-allowed"
+                            ? "bg-[#1a1a1a] text-[#666] cursor-not-allowed"
                             : "bg-amber-500 text-black hover:bg-amber-400"
                         }`}
                       >
@@ -355,7 +335,7 @@ export default function ChallengePage() {
                     ) : (
                       <button
                         onClick={handleNext}
-                        className="px-8 py-2.5 rounded-xl font-semibold bg-amber-500 text-black hover:bg-amber-400 transition-all"
+                        className="px-8 py-2.5 rounded-lg font-semibold bg-amber-500 text-black hover:bg-amber-400 transition-colors"
                       >
                         Next Challenge →
                       </button>
@@ -367,26 +347,26 @@ export default function ChallengePage() {
           </div>
 
           {/* Right: Stats Panel */}
-          <div className="w-full lg:w-72 border-t lg:border-t-0 lg:border-l border-white/5 bg-surface/50 p-4 lg:p-6 flex flex-row lg:flex-col gap-4 lg:gap-6 justify-center lg:justify-start">
+          <div className="w-full lg:w-64 border-t lg:border-t-0 lg:border-l border-[#2a2a2a] bg-[#0f0f0f] p-4 lg:p-5 flex flex-row lg:flex-col gap-4 lg:gap-5 justify-center lg:justify-start">
             {/* Stats Grid */}
-            <div className="grid grid-cols-4 lg:grid-cols-2 gap-3 lg:gap-4 w-full max-w-md lg:max-w-none">
-              <div className="text-center p-3 rounded-xl bg-white/5">
-                <div className="text-2xl lg:text-3xl font-bold text-creme">{score}</div>
-                <div className="text-[9px] lg:text-[10px] text-creme-muted uppercase tracking-wider">Correct</div>
+            <div className="grid grid-cols-4 lg:grid-cols-2 gap-3 w-full max-w-md lg:max-w-none">
+              <div className="text-center p-3 rounded-lg bg-[#1a1a1a] border border-[#2a2a2a]">
+                <div className="text-xl lg:text-2xl font-bold">{score}</div>
+                <div className="text-[10px] text-[#666] uppercase tracking-wide">Correct</div>
               </div>
-              <div className="text-center p-3 rounded-xl bg-amber-500/10 border border-amber-500/20">
-                <div className="text-2xl lg:text-3xl font-bold text-amber-400">{streak}</div>
-                <div className="text-[9px] lg:text-[10px] text-creme-muted uppercase tracking-wider">Streak</div>
+              <div className="text-center p-3 rounded-lg bg-[#1a1a1a] border border-amber-500/30">
+                <div className="text-xl lg:text-2xl font-bold text-amber-500">{streak}</div>
+                <div className="text-[10px] text-[#666] uppercase tracking-wide">Streak</div>
               </div>
-              <div className="text-center p-3 rounded-xl bg-white/5">
-                <div className="text-2xl lg:text-3xl font-bold text-creme-muted">{bestStreak}</div>
-                <div className="text-[9px] lg:text-[10px] text-creme-muted uppercase tracking-wider">Best</div>
+              <div className="text-center p-3 rounded-lg bg-[#1a1a1a] border border-[#2a2a2a]">
+                <div className="text-xl lg:text-2xl font-bold text-[#888]">{bestStreak}</div>
+                <div className="text-[10px] text-[#666] uppercase tracking-wide">Best</div>
               </div>
-              <div className="text-center p-3 rounded-xl bg-white/5">
-                <div className="text-2xl lg:text-3xl font-bold text-creme-muted">
+              <div className="text-center p-3 rounded-lg bg-[#1a1a1a] border border-[#2a2a2a]">
+                <div className="text-xl lg:text-2xl font-bold text-[#888]">
                   {totalPlayed > 0 ? Math.round((score / totalPlayed) * 100) : 0}%
                 </div>
-                <div className="text-[9px] lg:text-[10px] text-creme-muted uppercase tracking-wider">Accuracy</div>
+                <div className="text-[10px] text-[#666] uppercase tracking-wide">Accuracy</div>
               </div>
             </div>
 
@@ -394,25 +374,25 @@ export default function ChallengePage() {
             {revealed && challenge && (
               <div className="hidden lg:block">
                 {selected === challenge.correctPosition.id ? (
-                  <div className="flex items-center gap-2 p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/20">
-                    <svg className="w-5 h-5 text-emerald-400 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <div className="flex items-center gap-2 p-3 rounded-lg bg-green-500/10 border border-green-500/20">
+                    <svg className="w-5 h-5 text-green-500 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                     </svg>
-                    <span className="text-emerald-400 text-sm font-medium">Correct!</span>
+                    <span className="text-green-500 text-sm">Correct!</span>
                   </div>
                 ) : (
-                  <div className="flex items-center gap-2 p-3 rounded-xl bg-rose-500/10 border border-rose-500/20">
-                    <svg className="w-5 h-5 text-rose-400 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <div className="flex items-center gap-2 p-3 rounded-lg bg-red-500/10 border border-red-500/20">
+                    <svg className="w-5 h-5 text-red-500 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                     </svg>
-                    <span className="text-rose-400 text-sm font-medium">
+                    <span className="text-red-500 text-sm">
                       It was #{challenge.correctPosition.id}
                     </span>
                   </div>
                 )}
                 <Link
                   href={`/explore?position=${challenge.correctPosition.id}`}
-                  className="mt-3 block text-center text-xs text-creme-muted hover:text-amber-400 transition-colors"
+                  className="mt-3 block text-center text-sm text-[#888] hover:text-amber-500 transition-colors"
                 >
                   Explore Position →
                 </Link>
@@ -420,9 +400,9 @@ export default function ChallengePage() {
             )}
 
             {/* Instructions */}
-            <div className="hidden lg:block text-xs text-creme-muted/60 leading-relaxed">
-              <p className="mb-2 font-medium text-creme-muted/80">How to play:</p>
-              <p>Look at the position after several moves and guess which Chess960 starting position the game began from.</p>
+            <div className="hidden lg:block text-sm text-[#666] leading-relaxed">
+              <p className="mb-2 font-medium text-[#888]">How to play:</p>
+              <p>Identify the starting position from the game state shown.</p>
             </div>
           </div>
         </div>

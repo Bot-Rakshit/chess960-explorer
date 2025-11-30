@@ -2,22 +2,14 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { ArrowLeft } from "lucide-react";
+import Header from "@/components/Header";
 
 export default function AboutPage() {
   return (
     <div className="min-h-screen bg-background text-creme flex flex-col">
-      {/* Header */}
-      <header className="fixed top-0 w-full z-50 px-6 py-6 flex items-center justify-between bg-background/80 backdrop-blur-sm border-b border-white/5">
-        <div className="flex items-center gap-4">
-          <Link href="/" className="flex items-center gap-2 text-creme-muted hover:text-creme transition-colors group">
-            <ArrowLeft size={16} className="group-hover:-translate-x-1 transition-transform" />
-            <span className="text-sm font-medium tracking-wide uppercase">Back</span>
-          </Link>
-        </div>
-      </header>
+      <Header />
 
-      <main className="flex-1 flex flex-col items-center justify-center px-6 pt-24 pb-12">
+      <main className="flex-1 flex flex-col items-center justify-center px-6 py-12">
         <div className="max-w-2xl w-full space-y-12 text-center">
           
           {/* App Info */}

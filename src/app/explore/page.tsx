@@ -16,6 +16,7 @@ import PositionList from "@/components/PositionList";
 import AnalysisPanel from "@/components/AnalysisPanel";
 import StatsPanel from "@/components/StatsPanel";
 import GameViewer from "@/components/GameViewer";
+import Loader from "@/components/Loader";
 
 function createGame(fen: string): Chess | null {
   try {
@@ -166,11 +167,20 @@ function PgnViewer({ game, startFen, onClose }: PgnViewerProps) {
   );
 }
 
+interface SharpnessData {
+  [key: string]: {
+    sharpness: number;
+    wdl: { w: number; d: number; l: number };
+  };
+}
+
 export default function ExplorePage() {
   const [positions, setPositions] = useState<Position[]>([]);
   const [currentId, setCurrentId] = useState(() => Math.floor(Math.random() * 960));
   const [loading, setLoading] = useState(true);
   const [spinning, setSpinning] = useState(false);
+  const [sharpnessData, setSharpnessData] = useState<SharpnessData>({});
+  const [meanSharpness, setMeanSharpness] = useState(0);
   
   const [search, setSearch] = useState("");
   const [sortMode, setSortMode] = useState('id');
@@ -192,14 +202,23 @@ export default function ExplorePage() {
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
-    fetch("/data/chess960.json")
-      .then(r => r.json())
-      .then(d => {
-        setPositions(d.positions?.sort((a: Position, b: Position) => a.id - b.id) || []);
-        setLoading(false);
-        if (params.get("random") === "true") goRandom();
-      })
-      .catch(() => setLoading(false));
+    Promise.all([
+      fetch("/data/chess960.json").then(r => r.json()),
+      fetch("/data/chess960_sharpness.json").then(r => r.json()).catch(() => ({}))
+    ]).then(([posData, sharpData]) => {
+      setPositions(posData.positions?.sort((a: Position, b: Position) => a.id - b.id) || []);
+      setSharpnessData(sharpData || {});
+      
+      // Calculate mean sharpness
+      const values = Object.values(sharpData || {}) as { sharpness: number }[];
+      if (values.length > 0) {
+        const sum = values.reduce((acc, v) => acc + (v.sharpness || 0), 0);
+        setMeanSharpness(Math.round((sum / values.length) * 100) / 100);
+      }
+      
+      setLoading(false);
+      if (params.get("random") === "true") goRandom();
+    }).catch(() => setLoading(false));
   }, []);
 
   const pos = useMemo(() => positions.find(p => p.id === currentId), [positions, currentId]);
@@ -289,7 +308,7 @@ export default function ExplorePage() {
     setTimeout(() => { setCurrentId(Math.floor(Math.random() * 960)); setSpinning(false); }, 400);
   };
 
-  if (loading) return <div className="min-h-screen bg-background flex items-center justify-center text-creme-muted">Loading...</div>;
+  if (loading) return <Loader fullScreen text="Loading positions..." />;
 
   // --- Game Viewer Mode ---
   if (selectedGame) {
@@ -322,30 +341,36 @@ export default function ExplorePage() {
     <div className="h-screen bg-background text-creme flex flex-col overflow-hidden">
       {/* Header */}
       <header className="h-12 flex-shrink-0 border-b border-white/5 flex items-center justify-between px-4 bg-surface">
-        <Link href="/" className="flex items-center gap-2">
-          <div className="w-7 h-7 rounded bg-accent flex items-center justify-center">
+        <Link href="/" className="flex items-center gap-3">
+          <div className="w-7 h-7 rounded-lg bg-accent flex items-center justify-center">
             <span className="text-background font-bold text-xs">960</span>
           </div>
-          <span className="font-medium text-creme hidden sm:block">Chess960 Explorer</span>
+          <span className="font-semibold hidden sm:block">Chess960 Explorer</span>
         </Link>
+        
+        {/* Desktop Nav */}
+        <nav className="hidden lg:flex items-center gap-6">
+          <span className="text-sm text-accent font-medium">Explore</span>
+          <Link href="/challenge" className="text-sm text-creme-muted hover:text-creme transition-colors">Challenge</Link>
+        </nav>
         
         {/* Mobile Tab Switcher */}
         <div className="flex lg:hidden items-center gap-1 bg-background rounded-lg p-1">
           <button 
             onClick={() => setMobileTab('positions')}
-            className={`px-3 py-1.5 rounded text-xs font-medium transition-colors ${mobileTab === 'positions' ? 'bg-accent text-background' : 'text-creme-muted'}`}
+            className={`px-3 py-1.5 rounded text-sm font-medium transition-colors ${mobileTab === 'positions' ? 'bg-accent text-background' : 'text-creme-muted'}`}
           >
             List
           </button>
           <button 
             onClick={() => setMobileTab('board')}
-            className={`px-3 py-1.5 rounded text-xs font-medium transition-colors ${mobileTab === 'board' ? 'bg-accent text-background' : 'text-creme-muted'}`}
+            className={`px-3 py-1.5 rounded text-sm font-medium transition-colors ${mobileTab === 'board' ? 'bg-accent text-background' : 'text-creme-muted'}`}
           >
             Board
           </button>
           <button 
             onClick={() => setMobileTab('analysis')}
-            className={`px-3 py-1.5 rounded text-xs font-medium transition-colors ${mobileTab === 'analysis' ? 'bg-accent text-background' : 'text-creme-muted'}`}
+            className={`px-3 py-1.5 rounded text-sm font-medium transition-colors ${mobileTab === 'analysis' ? 'bg-accent text-background' : 'text-creme-muted'}`}
           >
             Analysis
           </button>
@@ -368,6 +393,8 @@ export default function ExplorePage() {
             filterHasGames={filterHasGames}
             onFilterHasGamesChange={setFilterHasGames}
             allTags={allTags}
+            sharpnessData={sharpnessData}
+            meanSharpness={meanSharpness}
           />
         </aside>
 
@@ -416,21 +443,17 @@ export default function ExplorePage() {
             </div>
 
             {/* Controls - Fixed at bottom */}
-            <div className="flex items-center gap-2 p-2 rounded-lg bg-surface border border-white/5 flex-shrink-0">
-              <button onClick={handleUndo} disabled={!moveHistory.length} className="px-3 py-1.5 rounded bg-background border border-white/5 text-creme-muted text-sm disabled:opacity-30 hover:border-white/10">Undo</button>
-              <button onClick={handleReset} className="px-3 py-1.5 rounded bg-background border border-white/5 text-creme-muted text-sm hover:border-white/10">Reset</button>
+            <div className="flex items-center gap-3 flex-shrink-0">
+              <button onClick={handleUndo} disabled={!moveHistory.length} className="text-sm text-creme-muted hover:text-creme disabled:opacity-30 disabled:hover:text-creme-muted transition-colors">Undo</button>
+              <button onClick={handleReset} className="text-sm text-creme-muted hover:text-creme transition-colors">Reset</button>
               
-              {moveHistory.length > 0 ? (
-                <div className="flex-1 px-3 py-1.5 rounded bg-background text-xs text-creme-muted font-mono truncate border border-white/5">
+              {moveHistory.length > 0 && (
+                <div className="flex-1 px-3 py-1.5 rounded-lg bg-surface text-sm text-creme-muted font-mono truncate">
                   {moveHistory.map((m, i) => (
                     <span key={i} className={i % 2 === 0 ? "text-creme" : "text-creme-muted ml-1 mr-2"}>
                       {i % 2 === 0 ? `${Math.floor(i / 2) + 1}.` : ''} {m}
                     </span>
                   ))}
-                </div>
-              ) : (
-                <div className="flex-1 text-center text-xs text-creme-muted/50 py-1.5">
-                  Make a move to explore
                 </div>
               )}
             </div>
@@ -528,6 +551,40 @@ export default function ExplorePage() {
                         {evalScore}
                       </div>
                     </div>
+                  </div>
+                );
+              })()}
+
+              {/* Sharpness */}
+              {(() => {
+                const sharp = sharpnessData[pos.id.toString()];
+                const sharpValue = sharp?.sharpness ?? meanSharpness;
+                const isEstimated = !sharp;
+                const sharpPercent = Math.min(100, (sharpValue / 2) * 100);
+                return (
+                  <div className="p-4 rounded-xl bg-surface border border-white/5">
+                    <div className="flex items-center justify-between mb-3">
+                      <div className="text-xs text-creme-muted uppercase tracking-wider">Sharpness</div>
+                      {isEstimated && <div className="text-[10px] text-creme-muted/50">estimated</div>}
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <div className="flex-1 h-2 rounded-full overflow-hidden bg-background">
+                        <div 
+                          className="h-full bg-gradient-to-r from-blue-400 to-rose-400 transition-all duration-300" 
+                          style={{ width: `${sharpPercent}%` }} 
+                        />
+                      </div>
+                      <div className="w-12 text-right text-sm font-medium text-creme">
+                        {sharpValue.toFixed(2)}
+                      </div>
+                    </div>
+                    {sharp?.wdl && (
+                      <div className="flex justify-between mt-3 text-xs text-creme-muted/70">
+                        <span>W: {(sharp.wdl.w / 10).toFixed(1)}%</span>
+                        <span>D: {(sharp.wdl.d / 10).toFixed(1)}%</span>
+                        <span>L: {(sharp.wdl.l / 10).toFixed(1)}%</span>
+                      </div>
+                    )}
                   </div>
                 );
               })()}
