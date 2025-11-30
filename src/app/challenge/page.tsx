@@ -212,191 +212,191 @@ export default function ChallengePage() {
         </div>
       </header>
 
-      <main className="max-w-6xl mx-auto px-4 py-6 sm:py-10">
-        {/* Score Bar */}
-        <div className="flex flex-wrap items-center justify-center gap-4 sm:gap-8 mb-6 sm:mb-10">
-          <div className="text-center">
-            <div className="text-2xl sm:text-3xl font-bold text-creme">{score}</div>
-            <div className="text-[10px] sm:text-xs text-creme-muted uppercase tracking-wider">Correct</div>
-          </div>
-          <div className="text-center">
-            <div className="text-2xl sm:text-3xl font-bold text-amber-400">{streak}</div>
-            <div className="text-[10px] sm:text-xs text-creme-muted uppercase tracking-wider">Streak</div>
-          </div>
-          <div className="text-center">
-            <div className="text-2xl sm:text-3xl font-bold text-creme-muted">{bestStreak}</div>
-            <div className="text-[10px] sm:text-xs text-creme-muted uppercase tracking-wider">Best</div>
-          </div>
-          <div className="text-center">
-            <div className="text-2xl sm:text-3xl font-bold text-creme-muted">
-              {totalPlayed > 0 ? Math.round((score / totalPlayed) * 100) : 0}%
-            </div>
-            <div className="text-[10px] sm:text-xs text-creme-muted uppercase tracking-wider">Accuracy</div>
-          </div>
-        </div>
-
-        {challenge && (
-          <>
-            {/* Game Info */}
-            <div className="text-center mb-6 sm:mb-8">
-              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-surface border border-white/10 mb-3">
-                <span className="text-creme font-medium">{getPlayerSurname(challenge.game.white)}</span>
-                <span className="text-creme-muted text-sm">vs</span>
-                <span className="text-creme font-medium">{getPlayerSurname(challenge.game.black)}</span>
-              </div>
-              <div className="text-xs sm:text-sm text-creme-muted">
-                {challenge.game.event} • {challenge.game.date}
-              </div>
-            </div>
-
-            {/* Question */}
-            <div className="text-center mb-6 sm:mb-8">
-              <h2 className="text-lg sm:text-xl text-creme mb-2">
-                Position after <span className="text-amber-400 font-bold">{challenge.moveCount}</span> moves
-              </h2>
-              <p className="text-xs sm:text-sm text-creme-muted">Which starting position did this game begin from?</p>
-            </div>
-
-            {/* Current Position Board */}
-            <div className="flex justify-center mb-8 sm:mb-12">
-              <div className="w-full max-w-[320px] sm:max-w-[400px]">
-                <div className="aspect-square rounded-xl overflow-hidden border-2 border-amber-500/30 shadow-lg shadow-amber-500/10">
-                  <ChessBoard
-                    fen={challenge.positionAfterMoves}
-                    arePiecesDraggable={false}
-                    id="current-position"
-                  />
+      <main className="h-[calc(100vh-57px)] overflow-hidden">
+        <div className="h-full flex flex-col lg:flex-row">
+          {/* Left: Game Area */}
+          <div className="flex-1 flex flex-col items-center justify-center p-4 lg:p-6 overflow-y-auto">
+            {challenge && (
+              <>
+                {/* Game Info + Question */}
+                <div className="text-center mb-4 lg:mb-6">
+                  <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-surface border border-white/10 mb-2">
+                    <span className="text-creme font-medium text-sm">{getPlayerSurname(challenge.game.white)}</span>
+                    <span className="text-creme-muted text-xs">vs</span>
+                    <span className="text-creme font-medium text-sm">{getPlayerSurname(challenge.game.black)}</span>
+                  </div>
+                  <div className="text-[10px] text-creme-muted mb-2">
+                    {challenge.game.event} • {challenge.game.date}
+                  </div>
+                  <h2 className="text-sm lg:text-base text-creme">
+                    After <span className="text-amber-400 font-bold">{challenge.moveCount}</span> moves — which starting position?
+                  </h2>
                 </div>
-                <div className="text-center mt-2 text-xs text-creme-muted">Current Position</div>
+
+                {/* Current Position Board */}
+                <div className="w-full max-w-[280px] lg:max-w-[320px] mb-4 lg:mb-6">
+                  <div className="aspect-square rounded-xl overflow-hidden border-2 border-amber-500/30 shadow-lg shadow-amber-500/10">
+                    <ChessBoard
+                      fen={challenge.positionAfterMoves}
+                      arePiecesDraggable={false}
+                      id="current-position"
+                    />
+                  </div>
+                </div>
+
+                {/* Options */}
+                <div className="grid grid-cols-3 gap-2 lg:gap-4 w-full max-w-[400px] lg:max-w-[480px] mb-4">
+                  {challenge.options.map((option) => {
+                    const isSelected = selected === option.id;
+                    const isCorrect = option.id === challenge.correctPosition.id;
+                    const showCorrect = revealed && isCorrect;
+                    const showWrong = revealed && isSelected && !isCorrect;
+
+                    return (
+                      <button
+                        key={option.id}
+                        onClick={() => handleSelect(option.id)}
+                        disabled={revealed}
+                        className={`relative group transition-all duration-200 ${
+                          revealed ? "cursor-default" : "cursor-pointer hover:scale-[1.02]"
+                        }`}
+                      >
+                        <div
+                          className={`aspect-square rounded-lg overflow-hidden border-2 transition-all duration-200 ${
+                            showCorrect
+                              ? "border-emerald-500 shadow-lg shadow-emerald-500/30"
+                              : showWrong
+                              ? "border-rose-500 shadow-lg shadow-rose-500/30"
+                              : isSelected
+                              ? "border-amber-500 shadow-lg shadow-amber-500/20"
+                              : "border-white/10 group-hover:border-white/30"
+                          }`}
+                        >
+                          <ChessBoard
+                            fen={option.fen}
+                            arePiecesDraggable={false}
+                            id={`option-${option.id}`}
+                          />
+                        </div>
+                        <div
+                          className={`mt-1 text-[10px] lg:text-xs font-medium transition-colors ${
+                            showCorrect
+                              ? "text-emerald-400"
+                              : showWrong
+                              ? "text-rose-400"
+                              : isSelected
+                              ? "text-amber-400"
+                              : "text-creme-muted group-hover:text-creme"
+                          }`}
+                        >
+                          #{option.id}
+                        </div>
+                        {showCorrect && (
+                          <div className="absolute -top-1 -right-1 w-5 h-5 lg:w-6 lg:h-6 rounded-full bg-emerald-500 flex items-center justify-center">
+                            <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                            </svg>
+                          </div>
+                        )}
+                        {showWrong && (
+                          <div className="absolute -top-1 -right-1 w-5 h-5 lg:w-6 lg:h-6 rounded-full bg-rose-500 flex items-center justify-center">
+                            <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                          </div>
+                        )}
+                      </button>
+                    );
+                  })}
+                </div>
+
+                {/* Action Button */}
+                <div className="flex justify-center">
+                  {!revealed ? (
+                    <button
+                      onClick={handleReveal}
+                      disabled={selected === null}
+                      className={`px-6 py-2.5 rounded-xl font-semibold text-sm transition-all ${
+                        selected === null
+                          ? "bg-white/5 text-creme-muted cursor-not-allowed"
+                          : "bg-amber-500 text-black hover:bg-amber-400"
+                      }`}
+                    >
+                      Check Answer
+                    </button>
+                  ) : (
+                    <button
+                      onClick={handleNext}
+                      className="px-6 py-2.5 rounded-xl font-semibold text-sm bg-amber-500 text-black hover:bg-amber-400 transition-all"
+                    >
+                      Next →
+                    </button>
+                  )}
+                </div>
+              </>
+            )}
+          </div>
+
+          {/* Right: Stats Panel */}
+          <div className="w-full lg:w-72 border-t lg:border-t-0 lg:border-l border-white/5 bg-surface/50 p-4 lg:p-6 flex flex-row lg:flex-col gap-4 lg:gap-6 justify-center lg:justify-start">
+            {/* Stats Grid */}
+            <div className="grid grid-cols-4 lg:grid-cols-2 gap-3 lg:gap-4 w-full max-w-md lg:max-w-none">
+              <div className="text-center p-3 rounded-xl bg-white/5">
+                <div className="text-2xl lg:text-3xl font-bold text-creme">{score}</div>
+                <div className="text-[9px] lg:text-[10px] text-creme-muted uppercase tracking-wider">Correct</div>
               </div>
-            </div>
-
-            {/* Options */}
-            <div className="grid grid-cols-3 gap-3 sm:gap-6 max-w-4xl mx-auto mb-8">
-              {challenge.options.map((option) => {
-                const isSelected = selected === option.id;
-                const isCorrect = option.id === challenge.correctPosition.id;
-                const showCorrect = revealed && isCorrect;
-                const showWrong = revealed && isSelected && !isCorrect;
-
-                return (
-                  <button
-                    key={option.id}
-                    onClick={() => handleSelect(option.id)}
-                    disabled={revealed}
-                    className={`relative group transition-all duration-200 ${
-                      revealed ? "cursor-default" : "cursor-pointer hover:scale-[1.02]"
-                    }`}
-                  >
-                    <div
-                      className={`aspect-square rounded-lg sm:rounded-xl overflow-hidden border-2 transition-all duration-200 ${
-                        showCorrect
-                          ? "border-emerald-500 shadow-lg shadow-emerald-500/30"
-                          : showWrong
-                          ? "border-rose-500 shadow-lg shadow-rose-500/30"
-                          : isSelected
-                          ? "border-amber-500 shadow-lg shadow-amber-500/20"
-                          : "border-white/10 group-hover:border-white/30"
-                      }`}
-                    >
-                      <ChessBoard
-                        fen={option.fen}
-                        arePiecesDraggable={false}
-                        id={`option-${option.id}`}
-                      />
-                    </div>
-                    <div
-                      className={`mt-2 text-xs sm:text-sm font-medium transition-colors ${
-                        showCorrect
-                          ? "text-emerald-400"
-                          : showWrong
-                          ? "text-rose-400"
-                          : isSelected
-                          ? "text-amber-400"
-                          : "text-creme-muted group-hover:text-creme"
-                      }`}
-                    >
-                      Position #{option.id}
-                    </div>
-                    {showCorrect && (
-                      <div className="absolute -top-2 -right-2 w-6 h-6 sm:w-8 sm:h-8 rounded-full bg-emerald-500 flex items-center justify-center">
-                        <svg className="w-3 h-3 sm:w-4 sm:h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
-                        </svg>
-                      </div>
-                    )}
-                    {showWrong && (
-                      <div className="absolute -top-2 -right-2 w-6 h-6 sm:w-8 sm:h-8 rounded-full bg-rose-500 flex items-center justify-center">
-                        <svg className="w-3 h-3 sm:w-4 sm:h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M6 18L18 6M6 6l12 12" />
-                        </svg>
-                      </div>
-                    )}
-                  </button>
-                );
-              })}
-            </div>
-
-            {/* Action Buttons */}
-            <div className="flex justify-center gap-4">
-              {!revealed ? (
-                <button
-                  onClick={handleReveal}
-                  disabled={selected === null}
-                  className={`px-6 sm:px-8 py-3 rounded-xl font-semibold text-sm sm:text-base transition-all ${
-                    selected === null
-                      ? "bg-white/5 text-creme-muted cursor-not-allowed"
-                      : "bg-amber-500 text-black hover:bg-amber-400"
-                  }`}
-                >
-                  Check Answer
-                </button>
-              ) : (
-                <button
-                  onClick={handleNext}
-                  className="px-6 sm:px-8 py-3 rounded-xl font-semibold text-sm sm:text-base bg-amber-500 text-black hover:bg-amber-400 transition-all"
-                >
-                  Next Challenge →
-                </button>
-              )}
+              <div className="text-center p-3 rounded-xl bg-amber-500/10 border border-amber-500/20">
+                <div className="text-2xl lg:text-3xl font-bold text-amber-400">{streak}</div>
+                <div className="text-[9px] lg:text-[10px] text-creme-muted uppercase tracking-wider">Streak</div>
+              </div>
+              <div className="text-center p-3 rounded-xl bg-white/5">
+                <div className="text-2xl lg:text-3xl font-bold text-creme-muted">{bestStreak}</div>
+                <div className="text-[9px] lg:text-[10px] text-creme-muted uppercase tracking-wider">Best</div>
+              </div>
+              <div className="text-center p-3 rounded-xl bg-white/5">
+                <div className="text-2xl lg:text-3xl font-bold text-creme-muted">
+                  {totalPlayed > 0 ? Math.round((score / totalPlayed) * 100) : 0}%
+                </div>
+                <div className="text-[9px] lg:text-[10px] text-creme-muted uppercase tracking-wider">Accuracy</div>
+              </div>
             </div>
 
             {/* Feedback Message */}
-            {revealed && (
-              <div className="mt-6 text-center">
+            {revealed && challenge && (
+              <div className="hidden lg:block">
                 {selected === challenge.correctPosition.id ? (
-                  <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-emerald-500/20 border border-emerald-500/30">
-                    <svg className="w-5 h-5 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <div className="flex items-center gap-2 p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/20">
+                    <svg className="w-5 h-5 text-emerald-400 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                     </svg>
-                    <span className="text-emerald-400 font-medium">Correct! Well done!</span>
+                    <span className="text-emerald-400 text-sm font-medium">Correct!</span>
                   </div>
                 ) : (
-                  <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-rose-500/20 border border-rose-500/30">
-                    <svg className="w-5 h-5 text-rose-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <div className="flex items-center gap-2 p-3 rounded-xl bg-rose-500/10 border border-rose-500/20">
+                    <svg className="w-5 h-5 text-rose-400 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                     </svg>
-                    <span className="text-rose-400 font-medium">
-                      Wrong! It was Position #{challenge.correctPosition.id}
+                    <span className="text-rose-400 text-sm font-medium">
+                      It was #{challenge.correctPosition.id}
                     </span>
                   </div>
                 )}
-              </div>
-            )}
-
-            {/* Link to Explore */}
-            {revealed && (
-              <div className="mt-4 text-center">
                 <Link
                   href={`/explore?position=${challenge.correctPosition.id}`}
-                  className="text-sm text-creme-muted hover:text-amber-400 transition-colors"
+                  className="mt-3 block text-center text-xs text-creme-muted hover:text-amber-400 transition-colors"
                 >
-                  Explore Position #{challenge.correctPosition.id} →
+                  Explore Position →
                 </Link>
               </div>
             )}
-          </>
-        )}
+
+            {/* Instructions */}
+            <div className="hidden lg:block text-xs text-creme-muted/60 leading-relaxed">
+              <p className="mb-2 font-medium text-creme-muted/80">How to play:</p>
+              <p>Look at the position after several moves and guess which Chess960 starting position the game began from.</p>
+            </div>
+          </div>
+        </div>
       </main>
     </div>
   );

@@ -8098,5 +8098,105 @@
     },
     "sharpness": 0.96,
     "analyzedAt": "2025-11-30T17:04:55.589Z"
+  },
+  "810": {
+    "fen": "rkqnbbrn/pppppppp/8/8/8/8/PPPPPPPP/RKQNBBRN w GQgq - 0 1",
+    "wdl": {
+      "w": 298,
+      "d": 482,
+      "l": 220
+    },
+    "sharpness": 0.89,
+    "analyzedAt": "2025-11-30T17:05:10.949Z"
+  },
+  "811": {
+    "fen": "rkqnbrnb/pppppppp/8/8/8/8/PPPPPPPP/RKQNBRNB w FQfq - 0 1",
+    "wdl": {
+      "w": 298,
+      "d": 473,
+      "l": 229
+    },
+    "sharpness": 0.93,
+    "analyzedAt": "2025-11-30T17:05:30.907Z"
+  },
+  "812": {
+    "fen": "rbkqnrbn/pppppppp/8/8/8/8/PPPPPPPP/RBKQNRBN w FQfq - 0 1",
+    "wdl": {
+      "w": 302,
+      "d": 474,
+      "l": 224
+    },
+    "sharpness": 0.92,
+    "analyzedAt": "2025-11-30T17:05:50.546Z"
+  },
+  "813": {
+    "fen": "rkqbnrbn/pppppppp/8/8/8/8/PPPPPPPP/RKQBNRBN w FQfq - 0 1",
+    "wdl": {
+      "w": 320,
+      "d": 444,
+      "l": 236
+    },
+    "sharpness": 1.08,
+    "analyzedAt": "2025-11-30T17:06:07.954Z"
+  },
+  "814": {
+    "fen": "rkqnrbbn/pppppppp/8/8/8/8/PPPPPPPP/RKQNRBBN w EQeq - 0 1",
+    "wdl": {
+      "w": 349,
+      "d": 447,
+      "l": 204
+    },
+    "sharpness": 1.02,
+    "analyzedAt": "2025-11-30T17:06:25.163Z"
+  },
+  "815": {
+    "fen": "rkqnrnbb/pppppppp/8/8/8/8/PPPPPPPP/RKQNRNBB w EQeq - 0 1",
+    "wdl": {
+      "w": 330,
+      "d": 437,
+      "l": 233
+    },
+    "sharpness": 1.11,
+    "analyzedAt": "2025-11-30T17:06:42.672Z"
+  },
+  "816": {
+    "fen": "bbrknqrn/pppppppp/8/8/8/8/PPPPPPPP/BBRKNQRN w GCgc - 0 1",
+    "wdl": {
+      "w": 323,
+      "d": 469,
+      "l": 208
+    },
+    "sharpness": 0.93,
+    "analyzedAt": "2025-11-30T17:07:05.585Z"
+  },
+  "817": {
+    "fen": "brkbnqrn/pppppppp/8/8/8/8/PPPPPPPP/BRKBNQRN w GBgb - 0 1",
+    "wdl": {
+      "w": 315,
+      "d": 480,
+      "l": 205
+    },
+    "sharpness": 0.88,
+    "analyzedAt": "2025-11-30T17:07:21.807Z"
+  },
+  "818": {
+    "fen": "brknqbrn/pppppppp/8/8/8/8/PPPPPPPP/BRKNQBRN w GBgb - 0 1",
+    "wdl": {
+      "w": 328,
+      "d": 439,
+      "l": 233
+    },
+    "sharpness": 1.1,
+    "analyzedAt": "2025-11-30T17:07:37.023Z"
+  },
+  "819": {
+    "fen": "brknqrnb/pppppppp/8/8/8/8/PPPPPPPP/BRKNQRNB w FBfb - 0 1",
+    "wdl": {
+      "w": 288,
+      "d": 491,
+      "l": 221
+    },
+    "sharpness": 0.85,
+    "analyzedAt": "2025-11-30T17:07:58.534Z"
   }
 }
