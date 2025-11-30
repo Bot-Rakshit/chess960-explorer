@@ -173,7 +173,10 @@ export default function PositionList({
       {/* List Header */}
       <div className="flex-shrink-0 px-3 py-2 text-xs text-creme-muted border-b border-white/5 flex justify-between">
         <span>{filtered.length} positions</span>
-        <span>Eval</span>
+        <div className="flex gap-4">
+          <span>Sharp</span>
+          <span>Eval</span>
+        </div>
       </div>
 
       {/* Scrollable List */}
@@ -183,6 +186,9 @@ export default function PositionList({
           const evalData = p.eval?.pvs?.[0];
           const score = evalData?.eval || 0;
           const isMate = !!evalData?.mate;
+          
+          const sharpness = sharpnessData[p.id.toString()]?.sharpness ?? meanSharpness;
+          const sharpColor = sharpness > 1.2 ? 'text-rose-400' : sharpness > 0.9 ? 'text-amber-400' : 'text-blue-400';
 
           let scoreColor = 'text-creme-muted';
           if (isMate) scoreColor = evalData.mate! > 0 ? 'text-emerald-400' : 'text-rose-400';
@@ -210,9 +216,14 @@ export default function PositionList({
                     </span>
                   )}
                 </div>
-                <span className={`font-mono text-sm ${scoreColor}`}>
-                  {isMate ? `M${Math.abs(evalData.mate!)}` : (score > 0 ? '+' : '') + score.toFixed(2)}
-                </span>
+                <div className="flex items-center gap-4">
+                  <span className={`font-mono text-xs ${sharpColor}`}>
+                    {sharpness.toFixed(2)}
+                  </span>
+                  <span className={`font-mono text-sm w-12 text-right ${scoreColor}`}>
+                    {isMate ? `M${Math.abs(evalData.mate!)}` : (score > 0 ? '+' : '') + score.toFixed(2)}
+                  </span>
+                </div>
               </div>
               {p.tags && p.tags.length > 0 && (
                 <div className="flex flex-wrap gap-1 mt-2">
