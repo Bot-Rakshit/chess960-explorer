@@ -66,6 +66,11 @@ async function loadGames(): Promise<ParsedGame[]> {
   return loadingPromise;
 }
 
+// Preload the database immediately when this module loads
+if (typeof window !== "undefined") {
+  loadGames();
+}
+
 // Normalize FEN for comparison - only compare board position (first part)
 // Castling rights notation differs between Chess960 formats (KQkq vs KFkf etc)
 function normalizeFen(fen: string): string {

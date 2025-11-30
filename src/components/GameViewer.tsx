@@ -232,8 +232,8 @@ export default function GameViewer({ game, pgn, onBack }: GameViewerProps) {
       {/* Main Content */}
       <div className="flex-1 flex overflow-hidden">
         {/* Board */}
-        <div className={`${mobileView === 'board' ? 'flex' : 'hidden'} sm:flex flex-1 justify-center bg-black/20 p-2 sm:p-4 min-w-0`}>
-          <div className="w-full max-w-[500px] lg:max-w-[560px] aspect-square shadow-2xl shadow-black/50 my-auto">
+        <div className={`${mobileView === 'board' ? 'flex' : 'hidden'} sm:flex flex-1 items-start justify-center bg-black/20 p-2 sm:p-4 min-w-0 overflow-auto`}>
+          <div className="w-full max-w-[500px] lg:max-w-[560px] aspect-square shadow-2xl shadow-black/50">
             <ChessBoard 
               fen={currentDisplayFen} 
               arePiecesDraggable={false}
