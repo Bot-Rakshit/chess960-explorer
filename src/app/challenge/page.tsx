@@ -236,16 +236,19 @@ export default function ChallengePage() {
                 {/* Current Position - Left Side */}
                 <div className="flex flex-col items-center">
                   <div className="text-center mb-3">
-                    <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-surface border border-white/10 mb-2">
+                    <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-surface border border-white/10 mb-1">
                       <span className="text-creme font-medium text-sm">{getPlayerSurname(challenge.game.white)}</span>
                       <span className="text-creme-muted text-xs">vs</span>
                       <span className="text-creme font-medium text-sm">{getPlayerSurname(challenge.game.black)}</span>
                     </div>
-                    <div className="text-[10px] text-creme-muted">
+                    <div className="text-[10px] text-creme-muted/70 mb-1">
+                      {challenge.game.event} • {challenge.game.date}
+                    </div>
+                    <div className="text-[11px] text-creme-muted">
                       After <span className="text-amber-400 font-bold">{challenge.moveCount}</span> moves
                     </div>
                   </div>
-                  <div className="w-[260px] sm:w-[300px] lg:w-[340px] xl:w-[380px]">
+                  <div className="w-[280px] sm:w-[320px] lg:w-[380px]">
                     <div className="aspect-square rounded-xl overflow-hidden border-2 border-amber-500/30 shadow-lg shadow-amber-500/10">
                       <ChessBoard
                         fen={challenge.positionAfterMoves}
@@ -256,10 +259,10 @@ export default function ChallengePage() {
                   </div>
                 </div>
 
-                {/* Options - Right Side */}
-                <div className="flex flex-col items-center gap-3">
-                  <div className="text-xs text-creme-muted">Which starting position?</div>
-                  <div className="grid grid-cols-3 lg:grid-cols-1 xl:grid-cols-3 gap-2 lg:gap-3">
+                {/* Options - Right Side (Vertical) */}
+                <div className="flex flex-col items-center gap-2">
+                  <div className="text-xs text-creme-muted mb-1">Which starting position?</div>
+                  <div className="flex flex-row lg:flex-col gap-2">
                     {challenge.options.map((option, idx) => {
                       const isSelected = selected === option.id;
                       const isCorrect = option.id === challenge.correctPosition.id;
@@ -268,8 +271,8 @@ export default function ChallengePage() {
                       
                       const boardColors = [
                         { light: "#e8dfd4", dark: "#99805d" },
-                        { light: "#d4e0e8", dark: "#5d8099" },
-                        { light: "#e2d4e8", dark: "#7a5d99" },
+                        { light: "#d4e8d8", dark: "#5d9970" },
+                        { light: "#e8d4df", dark: "#995d7a" },
                       ];
                       const colors = boardColors[idx % 3];
 
@@ -278,12 +281,12 @@ export default function ChallengePage() {
                           key={option.id}
                           onClick={() => handleSelect(option.id)}
                           disabled={revealed}
-                          className={`relative group transition-all duration-200 ${
-                            revealed ? "cursor-default" : "cursor-pointer hover:scale-[1.02]"
-                          }`}
+                          className={`relative group transition-all duration-200 flex flex-col lg:flex-row items-center gap-2 p-1.5 rounded-lg ${
+                            revealed ? "cursor-default" : "cursor-pointer hover:bg-white/5"
+                          } ${isSelected && !revealed ? "bg-white/5" : ""}`}
                         >
                           <div
-                            className={`w-[100px] sm:w-[110px] lg:w-[130px] xl:w-[120px] aspect-square rounded-lg overflow-hidden border-2 transition-all duration-200 ${
+                            className={`w-[90px] sm:w-[100px] lg:w-[110px] aspect-square rounded-lg overflow-hidden border-2 transition-all duration-200 ${
                               showCorrect
                                 ? "border-emerald-500 shadow-lg shadow-emerald-500/30"
                                 : showWrong
@@ -302,7 +305,7 @@ export default function ChallengePage() {
                             />
                           </div>
                           <div
-                            className={`mt-1 text-[10px] lg:text-xs font-medium transition-colors text-center ${
+                            className={`text-[10px] lg:text-xs font-medium transition-colors ${
                               showCorrect
                                 ? "text-emerald-400"
                                 : showWrong
@@ -315,14 +318,14 @@ export default function ChallengePage() {
                             #{option.id}
                           </div>
                           {showCorrect && (
-                            <div className="absolute -top-1 -right-1 w-5 h-5 lg:w-6 lg:h-6 rounded-full bg-emerald-500 flex items-center justify-center">
+                            <div className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-emerald-500 flex items-center justify-center">
                               <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
                               </svg>
                             </div>
                           )}
                           {showWrong && (
-                            <div className="absolute -top-1 -right-1 w-5 h-5 lg:w-6 lg:h-6 rounded-full bg-rose-500 flex items-center justify-center">
+                            <div className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-rose-500 flex items-center justify-center">
                               <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M6 18L18 6M6 6l12 12" />
                               </svg>
