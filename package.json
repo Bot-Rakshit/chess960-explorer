@@ -8,6 +8,7 @@
     "build": "next build",
     "build:db": "node scripts/build-games-db.js",
     "analyze": "node scripts/analyze-positions.js",
+    "sharpness": "node scripts/compute-sharpness.js",
     "merge-evals": "node scripts/merge-evals.js",
     "start": "next start",
     "lint": "eslint"
