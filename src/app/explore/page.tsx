@@ -507,6 +507,31 @@ export default function ExplorePage() {
                 </div>
               )}
 
+              {/* Stockfish Evaluation */}
+              {pos.eval && pos.eval.pvs && pos.eval.pvs.length > 0 && (
+                <div className="p-4 rounded-xl bg-surface border border-white/5">
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="text-[10px] text-creme-muted/50 uppercase tracking-widest font-medium">Stockfish Eval</div>
+                    <div className="text-[10px] text-creme-muted/40">depth {pos.eval.depth}</div>
+                  </div>
+                  <div className="space-y-2">
+                    {pos.eval.pvs.map((pv, idx: number) => {
+                      const evalScore = pv.mate ? `M${pv.mate}` : (pv.eval >= 0 ? `+${pv.eval.toFixed(2)}` : pv.eval.toFixed(2));
+                      const isPositive = pv.mate ? pv.mate > 0 : pv.eval >= 0;
+                      return (
+                        <div key={idx} className="flex items-center gap-3">
+                          <div className={`w-14 text-center py-1 rounded text-xs font-bold ${isPositive ? 'bg-emerald-500/20 text-emerald-400' : 'bg-rose-500/20 text-rose-400'}`}>
+                            {evalScore}
+                          </div>
+                          <div className="flex-1 text-xs text-creme-muted font-mono truncate">
+                            {pos.pvSan ? pos.pvSan.slice(0, 6).join(' ') : pv.moves.split(' ').slice(0, 6).join(' ')}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
 
             </div>
           )}
