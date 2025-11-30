@@ -2,7 +2,9 @@
 
 import { useState, useMemo } from "react";
 import { Chessboard } from "react-chessboard";
-import type { Square, PromotionPieceOption } from "react-chessboard/dist/chessboard/types";
+import type { Square, PromotionPieceOption, Piece } from "react-chessboard/dist/chessboard/types";
+
+type PieceSet = "alpha" | "chessiro" | "companion" | "merida" | "maestro" | "cases";
 
 interface ChessBoardProps {
   fen: string;
@@ -12,6 +14,7 @@ interface ChessBoardProps {
   id?: string;
   lastMove?: { from: string; to: string } | null;
   highlightSquares?: string[];
+  pieceSet?: PieceSet;
 }
 
 export default function ChessBoard({
@@ -21,25 +24,45 @@ export default function ChessBoard({
   orientation = "white",
   id = "chess-board",
   lastMove = null,
-  highlightSquares = []
+  highlightSquares = [],
+  pieceSet = "alpha"
 }: ChessBoardProps) {
   const [promotionSquare, setPromotionSquare] = useState<Square | null>(null);
   const [pendingMove, setPendingMove] = useState<{ from: Square; to: Square } | null>(null);
+
+  const customPieces = useMemo(() => {
+    const pieces: Record<string, ({ squareWidth }: { squareWidth: number }) => JSX.Element> = {};
+    const pieceTypes: Piece[] = ["wP", "wN", "wB", "wR", "wQ", "wK", "bP", "bN", "bB", "bR", "bQ", "bK"];
+    
+    pieceTypes.forEach((piece) => {
+      const color = piece[0].toLowerCase();
+      const type = piece[1].toLowerCase();
+      pieces[piece] = ({ squareWidth }) => (
+        <img
+          src={`/pieces/${pieceSet}/${color}${type}.svg`}
+          alt={piece}
+          style={{ width: squareWidth, height: squareWidth }}
+        />
+      );
+    });
+    
+    return pieces;
+  }, [pieceSet]);
 
   const customSquareStyles = useMemo(() => {
     const styles: Record<string, React.CSSProperties> = {};
     
     // Last move highlight
     if (lastMove) {
-      styles[lastMove.from] = { backgroundColor: 'rgba(255, 255, 0, 0.3)' };
-      styles[lastMove.to] = { backgroundColor: 'rgba(255, 255, 0, 0.4)' };
+      styles[lastMove.from] = { backgroundColor: 'rgba(180, 150, 90, 0.5)' };
+      styles[lastMove.to] = { backgroundColor: 'rgba(180, 150, 90, 0.6)' };
     }
     
     // Key squares / custom highlights
     highlightSquares.forEach(sq => {
       styles[sq] = { 
         ...styles[sq],
-        boxShadow: 'inset 0 0 0 3px rgba(16, 185, 129, 0.6)' 
+        boxShadow: 'inset 0 0 0 3px rgba(240, 230, 210, 0.6)' 
       };
     });
     
@@ -83,12 +106,13 @@ export default function ChessBoard({
         onPieceDrop={handlePieceDrop}
         arePiecesDraggable={arePiecesDraggable}
         boardOrientation={orientation}
-        customDarkSquareStyle={{ backgroundColor: '#8B7355' }}
-        customLightSquareStyle={{ backgroundColor: '#EAE0D5' }}
+        customDarkSquareStyle={{ backgroundColor: '#5d7a99' }}
+        customLightSquareStyle={{ backgroundColor: '#d4dde8' }}
         customBoardStyle={{
           borderRadius: '4px',
         }}
         customSquareStyles={customSquareStyles}
+        customPieces={customPieces}
         animationDuration={150}
         showPromotionDialog={!!promotionSquare}
         promotionToSquare={promotionSquare}

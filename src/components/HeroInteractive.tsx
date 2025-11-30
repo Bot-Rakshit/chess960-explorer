@@ -106,14 +106,14 @@ export default function HeroInteractive() {
   }, [currentPos]);
 
   return (
-    <div className="relative flex justify-center items-center -translate-y-8">
-        <div className="relative w-[750px] h-[750px] flex items-center justify-center">
-            {/* Reactor Rings - Keep these as they look cool but subtly adjusted */}
-            <div className="absolute inset-0 border border-creme/5 rounded-full animate-spin-slow" />
-            <div className="absolute inset-12 border border-dashed border-creme/5 rounded-full animate-reverse-spin" />
+    <div className="relative flex justify-center items-center lg:-translate-y-8">
+        <div className="relative w-[280px] h-[280px] sm:w-[400px] sm:h-[400px] md:w-[500px] md:h-[500px] lg:w-[600px] lg:h-[600px] xl:w-[750px] xl:h-[750px] flex items-center justify-center">
+            {/* Reactor Rings */}
+            <div className="absolute inset-0 border border-creme/5 rounded-full animate-spin-slow hidden sm:block" />
+            <div className="absolute inset-6 sm:inset-8 md:inset-10 lg:inset-12 border border-dashed border-creme/5 rounded-full animate-reverse-spin hidden sm:block" />
 
-            {/* The Core (Board) - Increased Size */}
-            <div className="relative z-10 w-[560px] h-[560px] bg-black/40 backdrop-blur-sm border border-white/5 p-6 shadow-2xl shadow-black/50 rounded-sm">
+            {/* The Core (Board) */}
+            <div className="relative z-10 w-[260px] h-[260px] sm:w-[320px] sm:h-[320px] md:w-[400px] md:h-[400px] lg:w-[480px] lg:h-[480px] xl:w-[560px] xl:h-[560px] bg-black/40 backdrop-blur-sm border border-white/5 p-2 sm:p-3 md:p-4 lg:p-6 shadow-2xl shadow-black/50 rounded-sm">
                 {mounted && (
                   <div className="w-full h-full relative">
                     <div className="w-full h-full">
@@ -126,33 +126,33 @@ export default function HeroInteractive() {
                   </div>
                 )}
 
-                {/* Floating Stats - Clean & Beautiful - MOVED INSIDE and ALIGNED */}
+                {/* Floating Stats */}
                 {currentPos && (
-                    <div className="absolute top-[102%] inset-x-0 flex flex-row items-center justify-between gap-2">
+                    <div className="absolute top-[102%] inset-x-0 flex flex-col sm:flex-row items-center sm:justify-between gap-2">
                         
                         {/* Slot Machine ID & Eval Group */}
                         <div className="flex gap-2">
-                            <div className="glass px-3 py-2 rounded-lg border border-white/10 shadow-lg backdrop-blur-md flex flex-col items-center min-w-[70px]">
-                                <div className="text-[8px] text-creme-muted uppercase tracking-widest mb-0.5">Pos</div>
-                                <div className="flex gap-0.5 text-lg font-mono font-bold text-creme">
+                            <div className="glass px-2 sm:px-3 py-1.5 sm:py-2 rounded-lg border border-white/10 shadow-lg backdrop-blur-md flex flex-col items-center min-w-[50px] sm:min-w-[70px]">
+                                <div className="text-[6px] sm:text-[8px] text-creme-muted uppercase tracking-widest mb-0.5">Pos</div>
+                                <div className="flex gap-0.5 text-sm sm:text-lg font-mono font-bold text-creme">
                                 {currentPos.id.toString().padStart(3, '0').split('').map((d, i) => (
-                                        <div key={i} className="bg-black/20 px-1 rounded border border-white/5">
+                                        <div key={i} className="bg-black/20 px-0.5 sm:px-1 rounded border border-white/5">
                                             {d}
                                         </div>
                                 ))}
                                 </div>
                             </div>
 
-                            <div className="glass px-3 py-2 rounded-lg border border-white/10 shadow-lg backdrop-blur-md flex flex-col items-center min-w-[70px]">
-                                <div className="text-[8px] text-creme-muted uppercase tracking-widest mb-0.5">Eval</div>
-                                <div className={`text-lg font-mono font-bold transition-colors ${parseFloat(evalScore || "0") > 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
+                            <div className="glass px-2 sm:px-3 py-1.5 sm:py-2 rounded-lg border border-white/10 shadow-lg backdrop-blur-md flex flex-col items-center min-w-[50px] sm:min-w-[70px]">
+                                <div className="text-[6px] sm:text-[8px] text-creme-muted uppercase tracking-widest mb-0.5">Eval</div>
+                                <div className={`text-sm sm:text-lg font-mono font-bold transition-colors ${parseFloat(evalScore || "0") > 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
                                     {evalScore || "0.00"}
                                 </div>
                             </div>
                         </div>
 
-                        {/* Tags Panel - Inline & Right Aligned */}
-                        <div className="flex items-center justify-end gap-1.5 flex-wrap flex-1">
+                        {/* Tags Panel */}
+                        <div className="flex items-center justify-center sm:justify-end gap-1.5 flex-wrap flex-1">
                             {currentPos.tags?.slice(0, 2).map((tag, i) => {
                                 const colors = [
                                     "bg-emerald-500/10 text-emerald-400 border-emerald-500/20 hover:bg-emerald-500/20",
@@ -163,7 +163,7 @@ export default function HeroInteractive() {
                                 return (
                                     <span 
                                         key={i} 
-                                        className={`px-2 py-1 rounded border text-[9px] uppercase tracking-wider font-medium shadow-lg backdrop-blur-md animate-in fade-in slide-in-from-bottom-4 duration-500 transition-all cursor-default whitespace-nowrap ${colorClass}`}
+                                        className={`px-1.5 sm:px-2 py-0.5 sm:py-1 rounded border text-[7px] sm:text-[9px] uppercase tracking-wider font-medium shadow-lg backdrop-blur-md animate-in fade-in slide-in-from-bottom-4 duration-500 transition-all cursor-default whitespace-nowrap ${colorClass}`}
                                         style={{ animationDelay: `${i * 100 + 200}ms` }}
                                     >
                                         {tag}
@@ -174,8 +174,6 @@ export default function HeroInteractive() {
                     </div>
                 )}
             </div>
-            
-            {/* Floating Stats - Removed from outer container */}
         </div>
     </div>
   );

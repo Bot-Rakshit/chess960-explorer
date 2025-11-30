@@ -61,7 +61,7 @@ export default function LandingPage() {
           </div>
 
           {/* Visual / Reactor Core */}
-          <div className="lg:col-span-7 relative flex justify-center items-center order-1 lg:order-2 h-[40vh] sm:h-[50vh] lg:h-full">
+          <div className="lg:col-span-7 relative flex justify-center items-center order-1 lg:order-2 min-h-[320px] sm:min-h-[420px] md:min-h-[500px] lg:h-full">
             <HeroInteractive />
           </div>
 
