@@ -72,7 +72,7 @@ export default function PositionList({
       if (!isNaN(n)) list = list.filter(p => p.id.toString().includes(search));
     }
     if (filterHasGames) list = list.filter(p => p.gmStats && p.gmStats.totalGames > 0);
-    if (filterTags.length) list = list.filter(p => filterTags.some(t => p.tags?.includes(t)));
+    if (filterTags.length) list = list.filter(p => filterTags.every(t => p.tags?.includes(t)));
 
     return [...list].sort((a, b) => {
       switch (sortMode) {
@@ -202,19 +202,32 @@ export default function PositionList({
               </div>
               {p.tags && p.tags.length > 0 && (
                 <div className="flex flex-wrap gap-1 mt-1.5">
-                  {p.tags.slice(0, 2).map((tag, i) => (
-                    <span 
-                      key={i} 
-                      className={`px-1 py-0.5 rounded text-[8px] border ${getTagStyle(tag, i)}`}
-                    >
-                      {tag}
-                    </span>
-                  ))}
-                  {p.tags.length > 2 && (
-                    <span className="px-1 py-0.5 rounded text-[8px] text-creme-muted/40">
-                      +{p.tags.length - 2}
-                    </span>
-                  )}
+                  {(() => {
+                    // Show selected filter tags first, then other tags
+                    const selectedTags = p.tags.filter(t => filterTags.includes(t));
+                    const otherTags = p.tags.filter(t => !filterTags.includes(t));
+                    const maxOtherTags = Math.max(0, 2 - selectedTags.length);
+                    const displayTags = [...selectedTags, ...otherTags.slice(0, maxOtherTags)];
+                    const hiddenCount = p.tags.length - displayTags.length;
+                    
+                    return (
+                      <>
+                        {displayTags.map((tag, i) => (
+                          <span 
+                            key={i} 
+                            className={`px-1 py-0.5 rounded text-[8px] border ${getTagStyle(tag, i)}`}
+                          >
+                            {tag}
+                          </span>
+                        ))}
+                        {hiddenCount > 0 && (
+                          <span className="px-1 py-0.5 rounded text-[8px] text-creme-muted/40">
+                            +{hiddenCount}
+                          </span>
+                        )}
+                      </>
+                    );
+                  })()}
                 </div>
               )}
             </button>
