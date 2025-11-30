@@ -494,22 +494,7 @@ export default function ExplorePage() {
                 </div>
               )}
 
-              {/* Key Squares Section */}
-              {pos.keySquares && pos.keySquares.length > 0 && (
-                <div className="p-4 rounded-xl bg-surface border border-white/5">
-                  <div className="text-[10px] text-creme-muted/50 uppercase tracking-widest mb-3 font-medium">Key Squares</div>
-                  <div className="flex flex-wrap gap-2">
-                    {pos.keySquares.map((sq, i) => (
-                      <span 
-                        key={i} 
-                        className="w-10 h-10 rounded-lg bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-sm font-mono font-bold flex items-center justify-center hover:bg-emerald-500/20 transition-colors cursor-default"
-                      >
-                        {sq}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-              )}
+
             </div>
           )}
 
