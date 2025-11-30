@@ -1,36 +1,77 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Freestyle Chess Explorer
+
+A modern Chess960 (Fischer Random) position explorer with Stockfish analysis, strategic plans, and GM tournament data.
+
+## Features
+
+- **All 960 Positions** - Browse and explore every possible Chess960 starting position
+- **Stockfish 17 Analysis** - Real-time engine evaluation with multi-PV support
+- **Strategic Plans** - AI-generated opening plans and key square analysis for each position
+- **GM Game Database** - Tournament games from Freestyle Chess events featuring top players
+- **Interactive Board** - Make moves, analyze variations with last-move highlighting
+- **Position Tags** - Filter positions by characteristics (fianchetto, central knights, etc.)
+- **Mobile Responsive** - Full functionality on all device sizes
+
+## Tech Stack
+
+- **Next.js 16** with App Router
+- **TypeScript** for type safety
+- **Tailwind CSS** for styling
+- **react-chessboard** for the chess board UI
+- **chessops** for chess logic and move validation
+- **Stockfish WASM** for browser-based engine analysis
 
 ## Getting Started
 
-First, run the development server:
-
 ```bash
+# Install dependencies
+npm install
+
+# Run development server
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+
+# Build for production
+npm run build
+
+# Start production server
+npm start
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000) to view the app.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Project Structure
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```
+src/
+├── app/
+│   ├── page.tsx          # Landing page
+│   ├── explore/page.tsx  # Main explorer interface
+│   ├── about/page.tsx    # About page
+│   ├── layout.tsx        # Root layout with metadata
+│   └── globals.css       # Global styles
+├── components/
+│   ├── ChessBoard.tsx    # Interactive chess board
+│   ├── AnalysisPanel.tsx # Engine analysis display
+│   ├── GameViewer.tsx    # GM game replay viewer
+│   ├── PositionList.tsx  # Position browser sidebar
+│   ├── StatsPanel.tsx    # Position statistics
+│   └── HeroInteractive.tsx # Landing page animation
+├── hooks/
+│   └── useStockfish.ts   # Stockfish engine hook
+└── types/
+    └── index.ts          # TypeScript interfaces
+```
 
-## Learn More
+## Data
 
-To learn more about Next.js, take a look at the following resources:
+- `public/data/chess960.json` - All 960 positions with evaluations, plans, and tags
+- `public/data/chess960_database.pgn` - GM tournament games
+- `public/data/chess960_freestyle_database.pgn` - Freestyle Chess event games
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## License
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+MIT
 
-## Deploy on Vercel
+## Credits
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Developed by [Chessiro](https://chessiro.com)

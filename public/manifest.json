@@ -1,0 +1,17 @@
+{
+  "name": "Chess960 Explorer",
+  "short_name": "960 Explorer",
+  "description": "Explore all 960 Fischer Random starting positions with engine analysis and GM game database",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0D0D0C",
+  "theme_color": "#C9A227",
+  "icons": [
+    {
+      "src": "/chessiro.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
