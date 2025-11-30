@@ -2,7 +2,9 @@
 
 import React, { useState, useMemo, useCallback } from "react";
 import { Chessboard } from "react-chessboard";
-import { Chess } from "chess.js";
+import { Chess } from "chessops/chess";
+import { parseFen } from "chessops/fen";
+import { parseSquare, makeSquare } from "chessops/util";
 import type { Square, PromotionPieceOption, Piece } from "react-chessboard/dist/chessboard/types";
 
 type PieceSet = "alpha" | "chessiro" | "companion" | "merida" | "maestro" | "cases";
@@ -16,6 +18,41 @@ interface ChessBoardProps {
   lastMove?: { from: string; to: string } | null;
   highlightSquares?: string[];
   pieceSet?: PieceSet;
+}
+
+// Helper to create a Chess960 game from FEN
+function createGame(fen: string): Chess | null {
+  try {
+    const setup = parseFen(fen);
+    if (setup.isOk) {
+      const game = Chess.fromSetup(setup.value);
+      if (game.isOk) return game.value;
+    }
+  } catch {}
+  return null;
+}
+
+// Get legal moves for a specific square
+function getLegalMovesFrom(game: Chess, fromSq: number): number[] {
+  const moves: number[] = [];
+  const legalDests = game.allDests();
+  const dests = legalDests.get(fromSq);
+  if (dests) {
+    for (const to of dests) {
+      moves.push(to);
+    }
+  }
+  return moves;
+}
+
+// Get piece at square
+function getPieceAt(game: Chess, sq: number): { color: 'w' | 'b'; type: string } | null {
+  const piece = game.board.get(sq);
+  if (!piece) return null;
+  return {
+    color: piece.color === 'white' ? 'w' : 'b',
+    type: piece.role[0] // 'pawn' -> 'p', 'knight' -> 'n', etc.
+  };
 }
 
 export default function ChessBoard({
@@ -52,28 +89,42 @@ export default function ChessBoard({
     return pieces;
   }, [pieceSet]);
 
-  // Get legal moves for a square
+  // Get legal moves for a square using chessops
   const getLegalMovesForSquare = useCallback((square: Square, currentFen: string): Square[] => {
-    try {
-      const game = new Chess(currentFen);
-      const moves = game.moves({ square, verbose: true });
-      return moves.map(m => m.to as Square);
-    } catch {
-      return [];
-    }
+    const game = createGame(currentFen);
+    if (!game) return [];
+    
+    const sqNum = parseSquare(square);
+    if (sqNum === undefined) return [];
+    
+    const moveNums = getLegalMovesFrom(game, sqNum);
+    return moveNums.map(n => makeSquare(n) as Square);
   }, []);
 
   // Check if a move is a promotion
   const isPromotionMove = useCallback((from: Square, to: Square, currentFen: string): boolean => {
-    try {
-      const game = new Chess(currentFen);
-      const piece = game.get(from);
-      if (!piece || piece.type !== 'p') return false;
-      const toRank = to[1];
-      return (piece.color === 'w' && toRank === '8') || (piece.color === 'b' && toRank === '1');
-    } catch {
-      return false;
-    }
+    const game = createGame(currentFen);
+    if (!game) return false;
+    
+    const fromSq = parseSquare(from);
+    if (fromSq === undefined) return false;
+    
+    const piece = getPieceAt(game, fromSq);
+    if (!piece || piece.type !== 'p') return false;
+    
+    const toRank = to[1];
+    return (piece.color === 'w' && toRank === '8') || (piece.color === 'b' && toRank === '1');
+  }, []);
+
+  // Check if there's a piece at square
+  const hasPieceAt = useCallback((square: Square, currentFen: string): boolean => {
+    const game = createGame(currentFen);
+    if (!game) return false;
+    
+    const sqNum = parseSquare(square);
+    if (sqNum === undefined) return false;
+    
+    return game.board.get(sqNum) !== undefined;
   }, []);
 
   // Handle square click for click-to-move
@@ -90,14 +141,17 @@ export default function ChessBoard({
       }
       
       // Get the piece for the callback
-      try {
-        const game = new Chess(fen);
-        const piece = game.get(selectedSquare);
-        if (piece) {
-          const pieceStr = `${piece.color === 'w' ? 'w' : 'b'}${piece.type.toUpperCase()}`;
-          onPieceDrop(selectedSquare, square, pieceStr);
+      const game = createGame(fen);
+      if (game) {
+        const fromSq = parseSquare(selectedSquare);
+        if (fromSq !== undefined) {
+          const piece = getPieceAt(game, fromSq);
+          if (piece) {
+            const pieceStr = `${piece.color}${piece.type.toUpperCase()}`;
+            onPieceDrop(selectedSquare, square, pieceStr);
+          }
         }
-      } catch {}
+      }
       
       setSelectedSquare(null);
       setLegalMoves([]);
@@ -105,20 +159,28 @@ export default function ChessBoard({
     }
 
     // If clicking on own piece, select it
-    try {
-      const game = new Chess(fen);
-      const piece = game.get(square);
-      const turn = game.turn();
-      
-      if (piece && piece.color === turn) {
-        setSelectedSquare(square);
-        setLegalMoves(getLegalMovesForSquare(square, fen));
-      } else {
-        // Clicking empty square or opponent piece - deselect
-        setSelectedSquare(null);
-        setLegalMoves([]);
-      }
-    } catch {
+    const game = createGame(fen);
+    if (!game) {
+      setSelectedSquare(null);
+      setLegalMoves([]);
+      return;
+    }
+
+    const sqNum = parseSquare(square);
+    if (sqNum === undefined) {
+      setSelectedSquare(null);
+      setLegalMoves([]);
+      return;
+    }
+
+    const piece = getPieceAt(game, sqNum);
+    const turn = game.turn;
+    const turnColor = turn === 'white' ? 'w' : 'b';
+    
+    if (piece && piece.color === turnColor) {
+      setSelectedSquare(square);
+      setLegalMoves(getLegalMovesForSquare(square, fen));
+    } else {
       setSelectedSquare(null);
       setLegalMoves([]);
     }
@@ -138,7 +200,6 @@ export default function ChessBoard({
 
   // Handle drag end - clear highlights
   const handlePieceDragEnd = useCallback(() => {
-    // Don't clear immediately to allow the drop to complete
     setTimeout(() => {
       setSelectedSquare(null);
       setLegalMoves([]);
@@ -147,7 +208,6 @@ export default function ChessBoard({
 
   // Handle piece drop (drag and drop)
   const handlePieceDrop = useCallback((sourceSquare: Square, targetSquare: Square, piece: string): boolean => {
-    // Check if this is a pawn promotion
     if (isPromotionMove(sourceSquare, targetSquare, fen)) {
       setPendingMove({ from: sourceSquare, to: targetSquare });
       setPromotionSquare(targetSquare);
@@ -201,25 +261,16 @@ export default function ChessBoard({
     
     // Legal move highlights with dots
     legalMoves.forEach(sq => {
-      // Check if there's a piece on this square (capture)
-      try {
-        const game = new Chess(fen);
-        const piece = game.get(sq as Square);
-        if (piece) {
-          // Capture square - ring highlight
-          styles[sq] = { 
-            ...styles[sq],
-            background: 'radial-gradient(transparent 0%, transparent 79%, rgba(0,0,0,0.3) 80%)',
-            borderRadius: '50%'
-          };
-        } else {
-          // Empty square - dot
-          styles[sq] = { 
-            ...styles[sq],
-            background: 'radial-gradient(rgba(0,0,0,0.25) 20%, transparent 20%)',
-          };
-        }
-      } catch {
+      const hasCapture = hasPieceAt(sq, fen);
+      if (hasCapture) {
+        // Capture square - ring highlight
+        styles[sq] = { 
+          ...styles[sq],
+          background: 'radial-gradient(transparent 0%, transparent 79%, rgba(0,0,0,0.3) 80%)',
+          borderRadius: '50%'
+        };
+      } else {
+        // Empty square - dot
         styles[sq] = { 
           ...styles[sq],
           background: 'radial-gradient(rgba(0,0,0,0.25) 20%, transparent 20%)',
@@ -227,7 +278,7 @@ export default function ChessBoard({
       }
     });
     
-    // Key squares / custom highlights
+    // Custom highlights
     highlightSquares.forEach(sq => {
       styles[sq] = { 
         ...styles[sq],
@@ -236,7 +287,7 @@ export default function ChessBoard({
     });
     
     return styles;
-  }, [lastMove, selectedSquare, legalMoves, highlightSquares, fen]);
+  }, [lastMove, selectedSquare, legalMoves, highlightSquares, fen, hasPieceAt]);
 
   return (
     <div className="w-full h-full">
