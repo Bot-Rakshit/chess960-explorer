@@ -6,111 +6,80 @@ import { GMGame } from "@/types";
 interface ParsedGame {
   pgn: string;
   fen: string;
+  board: string;
   white: string;
   black: string;
   event: string;
   date: string;
   result: string;
-  whiteElo?: number;
-  blackElo?: number;
+  whiteElo: number | null;
+  blackElo: number | null;
 }
 
-let cachedGames: ParsedGame[] | null = null;
-let loadingPromise: Promise<ParsedGame[]> | null = null;
-
-function parseGamesFromPgn(text: string): ParsedGame[] {
-  const games: ParsedGame[] = [];
-  const gameTexts = text.split(/(?=\[Event\s+")/);
-
-  for (const gameText of gameTexts) {
-    if (!gameText.trim()) continue;
-
-    const getHeader = (header: string): string => {
-      const match = gameText.match(new RegExp(`\\[${header}\\s+"([^"]+)"\\]`));
-      return match ? match[1] : "";
-    };
-
-    const fen = getHeader("FEN");
-    if (!fen) continue;
-
-    const whiteEloStr = getHeader("WhiteElo");
-    const blackEloStr = getHeader("BlackElo");
-
-    games.push({
-      pgn: gameText,
-      fen,
-      white: getHeader("White"),
-      black: getHeader("Black"),
-      event: getHeader("Event"),
-      date: getHeader("Date"),
-      result: getHeader("Result"),
-      whiteElo: whiteEloStr ? parseInt(whiteEloStr) : undefined,
-      blackElo: blackEloStr ? parseInt(blackEloStr) : undefined,
-    });
-  }
-
-  return games;
+interface GamesDB {
+  games: ParsedGame[];
+  gamesByBoard: Record<string, ParsedGame[]>;
 }
 
-async function loadGames(): Promise<ParsedGame[]> {
-  if (cachedGames) return cachedGames;
+let cachedDB: GamesDB | null = null;
+let loadingPromise: Promise<GamesDB> | null = null;
+
+async function loadDB(): Promise<GamesDB> {
+  if (cachedDB) return cachedDB;
   if (loadingPromise) return loadingPromise;
 
-  loadingPromise = fetch("/data/chess960_all_games.pgn")
-    .then((res) => res.text())
-    .then((text) => {
-      cachedGames = parseGamesFromPgn(text);
-      return cachedGames;
+  loadingPromise = fetch("/data/games_db.json")
+    .then((res) => res.json())
+    .then((data: GamesDB) => {
+      cachedDB = data;
+      return cachedDB;
     });
 
   return loadingPromise;
 }
 
-// Preload the database immediately when this module loads
+// Preload immediately
 if (typeof window !== "undefined") {
-  loadGames();
+  loadDB();
 }
 
-// Normalize FEN for comparison - only compare board position (first part)
-// Castling rights notation differs between Chess960 formats (KQkq vs KFkf etc)
-function normalizeFen(fen: string): string {
-  const parts = fen.split(" ");
-  // Only use board position - ignore castling, en passant, move counters
-  return parts[0];
+function getBoardPosition(fen: string): string {
+  return fen.split(" ")[0];
 }
 
 export function usePgnDatabase() {
-  const [games, setGames] = useState<ParsedGame[]>([]);
+  const [db, setDb] = useState<GamesDB | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    loadGames().then((g) => {
-      setGames(g);
+    loadDB().then((data) => {
+      setDb(data);
       setLoading(false);
     });
   }, []);
 
   const getGamesForFen = useCallback(
     (fen: string): GMGame[] => {
-      const normalizedTarget = normalizeFen(fen);
-      return games
-        .filter((g) => normalizeFen(g.fen) === normalizedTarget)
-        .map((g) => ({
-          event: g.event,
-          date: g.date,
-          white: g.white,
-          black: g.black,
-          result: g.result,
-          whiteElo: g.whiteElo,
-          blackElo: g.blackElo,
-        }));
+      if (!db) return [];
+      const board = getBoardPosition(fen);
+      const games = db.gamesByBoard[board] || [];
+      return games.map((g) => ({
+        event: g.event,
+        date: g.date,
+        white: g.white,
+        black: g.black,
+        result: g.result,
+        whiteElo: g.whiteElo || undefined,
+        blackElo: g.blackElo || undefined,
+      }));
     },
-    [games]
+    [db]
   );
 
   const getPgnForGame = useCallback(
     (game: GMGame): string | null => {
-      const found = games.find(
+      if (!db) return null;
+      const found = db.games.find(
         (g) =>
           g.white === game.white &&
           g.black === game.black &&
@@ -119,14 +88,14 @@ export function usePgnDatabase() {
       );
       return found?.pgn || null;
     },
-    [games]
+    [db]
   );
 
   const getGameStats = useCallback(
     (fen: string) => {
-      const matchingGames = games.filter(
-        (g) => normalizeFen(g.fen) === normalizeFen(fen)
-      );
+      if (!db) return null;
+      const board = getBoardPosition(fen);
+      const matchingGames = db.gamesByBoard[board] || [];
       if (matchingGames.length === 0) return null;
 
       const whiteWins = matchingGames.filter((g) => g.result === "1-0").length;
@@ -158,16 +127,15 @@ export function usePgnDatabase() {
             white: g.white,
             black: g.black,
             result: g.result,
-            whiteElo: g.whiteElo,
-            blackElo: g.blackElo,
+            whiteElo: g.whiteElo || undefined,
+            blackElo: g.blackElo || undefined,
           })),
       };
     },
-    [games]
+    [db]
   );
 
   return {
-    games,
     loading,
     getGamesForFen,
     getPgnForGame,
