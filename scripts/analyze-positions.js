@@ -4,7 +4,7 @@ const { spawn } = require('child_process');
 
 const POSITIONS_PATH = path.join(__dirname, '../public/data/chess960.json');
 const OUTPUT_PATH = path.join(__dirname, '../public/data/chess960_evals.json');
-const SEARCH_TIME_MS = 10000; // 10 seconds per position (reaches depth ~25-35)
+const SEARCH_TIME_MS = 15000; // 15 seconds per position
 const MULTI_PV = 3; // Top 3 lines
 
 // Stockfish binary path
