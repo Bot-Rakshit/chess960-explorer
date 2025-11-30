@@ -66,10 +66,12 @@ async function loadGames(): Promise<ParsedGame[]> {
   return loadingPromise;
 }
 
-// Normalize FEN for comparison (ignore move counters)
+// Normalize FEN for comparison - only compare board position (first part)
+// Castling rights notation differs between Chess960 formats (KQkq vs KFkf etc)
 function normalizeFen(fen: string): string {
   const parts = fen.split(" ");
-  return parts.slice(0, 4).join(" ");
+  // Only use board position - ignore castling, en passant, move counters
+  return parts[0];
 }
 
 export function usePgnDatabase() {
