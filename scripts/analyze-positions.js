@@ -4,7 +4,7 @@ const { spawn } = require('child_process');
 
 const POSITIONS_PATH = path.join(__dirname, '../public/data/chess960.json');
 const OUTPUT_PATH = path.join(__dirname, '../public/data/chess960_evals.json');
-const DEPTH = 40;
+const SEARCH_TIME_MS = 10000; // 10 seconds per position (reaches depth ~25-35)
 const MULTI_PV = 3; // Top 3 lines
 
 // Stockfish binary path
@@ -16,7 +16,9 @@ class StockfishEngine {
     this.ready = false;
     this.resolveReady = null;
     this.currentResolve = null;
-    this.lines = [];
+    this.lines = {};
+    this.currentDepth = 0;
+    this.onProgress = null;
   }
 
   start() {
@@ -52,6 +54,7 @@ class StockfishEngine {
   handleLine(line) {
     if (line === 'uciok') {
       this.send('setoption name UCI_Chess960 value true');
+      this.send('setoption name Threads value 4');
       this.send(`setoption name MultiPV value ${MULTI_PV}`);
       this.send('isready');
     } else if (line === 'readyok') {
@@ -63,7 +66,8 @@ class StockfishEngine {
       this.parseInfoLine(line);
     } else if (line.startsWith('bestmove')) {
       if (this.currentResolve) {
-        this.currentResolve(this.lines);
+        const result = Object.values(this.lines).sort((a, b) => b.depth - a.depth || (a.pvNum - b.pvNum));
+        this.currentResolve({ lines: result.slice(0, MULTI_PV), depth: this.currentDepth });
         this.currentResolve = null;
       }
     }
@@ -79,38 +83,47 @@ class StockfishEngine {
     if (!depthMatch || !scoreMatch || !pvMatch) return;
 
     const depth = parseInt(depthMatch[1]);
-    if (depth < DEPTH) return; // Only capture final depth
-
     const pvNum = pvNumMatch ? parseInt(pvNumMatch[1]) : 1;
     const scoreType = scoreMatch[1];
     const scoreValue = parseInt(scoreMatch[2]);
     const pv = pvMatch[1];
     const nodes = nodesMatch ? parseInt(nodesMatch[1]) : 0;
 
+    if (depth > this.currentDepth) {
+      this.currentDepth = depth;
+      if (this.onProgress) this.onProgress(depth);
+    }
+
     const evalData = {
       moves: pv,
       depth,
       nodes,
+      pvNum,
     };
 
     if (scoreType === 'mate') {
       evalData.mate = scoreValue;
       evalData.eval = scoreValue > 0 ? 9999 : -9999;
     } else {
-      evalData.eval = scoreValue / 100; // Convert centipawns to pawns
+      evalData.eval = scoreValue / 100;
     }
 
-    // Store by PV number (1-indexed)
-    this.lines[pvNum - 1] = evalData;
+    // Store best result for each PV
+    const key = `pv${pvNum}`;
+    if (!this.lines[key] || this.lines[key].depth < depth) {
+      this.lines[key] = evalData;
+    }
   }
 
-  analyze(fen) {
+  analyze(fen, onProgress) {
     return new Promise((resolve) => {
-      this.lines = [];
+      this.lines = {};
+      this.currentDepth = 0;
       this.currentResolve = resolve;
+      this.onProgress = onProgress;
       this.send('ucinewgame');
       this.send(`position fen ${fen}`);
-      this.send(`go depth ${DEPTH}`);
+      this.send(`go movetime ${SEARCH_TIME_MS}`);
     });
   }
 
@@ -125,7 +138,7 @@ class StockfishEngine {
 async function main() {
   console.log('='.repeat(60));
   console.log('Chess960 Position Analyzer');
-  console.log(`Depth: ${DEPTH}, MultiPV: ${MULTI_PV}`);
+  console.log(`Time: ${SEARCH_TIME_MS/1000}s per position, MultiPV: ${MULTI_PV}`);
   console.log('='.repeat(60));
 
   // Load positions
@@ -166,13 +179,17 @@ async function main() {
     const pos = positions[i];
     const fen = pos.fen;
     
-    process.stdout.write(`\r[${i + 1}/${positions.length}] Analyzing position #${pos.id}...`);
+    process.stdout.write(`\r[${i + 1}/${positions.length}] #${pos.id} depth: --`);
     
-    const lines = await engine.analyze(fen);
+    const onProgress = (depth) => {
+      process.stdout.write(`\r[${i + 1}/${positions.length}] #${pos.id} depth: ${depth} `);
+    };
+    
+    const { lines, depth } = await engine.analyze(fen, onProgress);
     
     results[pos.id] = {
       fen,
-      depth: DEPTH,
+      depth,
       pvs: lines.filter(Boolean).map(l => ({
         moves: l.moves,
         eval: l.eval,
@@ -181,8 +198,8 @@ async function main() {
       analyzedAt: new Date().toISOString(),
     };
 
-    // Save progress every 10 positions
-    if ((i + 1) % 10 === 0 || i === positions.length - 1) {
+    // Save progress every 5 positions
+    if ((i + 1) % 5 === 0 || i === positions.length - 1) {
       fs.writeFileSync(OUTPUT_PATH, JSON.stringify(results, null, 2));
     }
 
@@ -192,12 +209,12 @@ async function main() {
     const avgTime = elapsed / positionsAnalyzed;
     const remaining = (positions.length - i - 1) * avgTime;
     
-    process.stdout.write(` | ${avgTime.toFixed(1)}s/pos | ETA: ${formatTime(remaining)}`);
+    process.stdout.write(`\r[${i + 1}/${positions.length}] #${pos.id} done @ d${depth} | ${avgTime.toFixed(1)}s/pos | ETA: ${formatTime(remaining)}      \n`);
   }
 
   engine.quit();
 
-  console.log('\n\n' + '='.repeat(60));
+  console.log('\n' + '='.repeat(60));
   console.log('Analysis complete!');
   console.log(`Output: ${OUTPUT_PATH}`);
   console.log('='.repeat(60));

@@ -7,7 +7,7 @@
     "prebuild": "node scripts/build-games-db.js",
     "build": "next build",
     "build:db": "node scripts/build-games-db.js",
-    "analyze": "node scripts/analyze-positions.js",
+    "analyze": "python3 scripts/analyze_positions.py",
     "merge-evals": "node scripts/merge-evals.js",
     "start": "next start",
     "lint": "eslint"
