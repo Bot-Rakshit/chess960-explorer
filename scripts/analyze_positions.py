@@ -151,18 +151,21 @@ def worker_thread(worker_id, task_queue, results, lock, progress):
             pos_id, fen = task_queue.get(timeout=1)
         except queue.Empty:
             break
+        
+        with lock:
+            progress["current"][worker_id] = f"W{worker_id}: #{pos_id}"
             
         result = worker.analyze(fen)
         
         with lock:
-            results[pos_id] = {
+            results[str(pos_id)] = {
                 "fen": fen,
                 "depth": result["depth"],
                 "pvs": result["pvs"],
                 "analyzedAt": datetime.now().isoformat(),
             }
             progress["done"] += 1
-            progress["last"] = f"#{pos_id} @ d{result['depth']}"
+            progress["current"][worker_id] = f"W{worker_id}: #{pos_id} done d{result['depth']}"
             
         task_queue.task_done()
     
@@ -207,11 +210,12 @@ def main():
     
     # Progress tracking
     lock = threading.Lock()
-    progress = {"done": 0, "last": ""}
+    progress = {"done": 0, "current": {i: "" for i in range(NUM_WORKERS)}}
     start_time = time.time()
+    last_save = 0
     
     # Start workers
-    print(f"\nStarting {NUM_WORKERS} workers...")
+    print(f"\nStarting {NUM_WORKERS} workers...\n")
     threads = []
     for i in range(NUM_WORKERS):
         t = threading.Thread(target=worker_thread, args=(i, task_queue, results, lock, progress))
@@ -221,23 +225,24 @@ def main():
     # Progress display
     try:
         while any(t.is_alive() for t in threads):
-            time.sleep(1)
+            time.sleep(0.5)
             with lock:
                 done = progress["done"]
-                last = progress["last"]
+                current = " | ".join(progress["current"].values())
             
             elapsed = time.time() - start_time
             if done > 0:
                 avg_time = elapsed / done
-                eta = (remaining - done) * avg_time
+                eta = (remaining - done) * avg_time / NUM_WORKERS
                 eta_str = f"{eta/3600:.1f}h" if eta > 3600 else f"{eta/60:.0f}m"
-                print(f"\r[{done}/{remaining}] {last} | {avg_time:.1f}s/pos | ETA: {eta_str}    ", end="", flush=True)
+                print(f"\r[{done}/{remaining}] {current} | {avg_time:.1f}s/pos | ETA: {eta_str}        ", end="", flush=True)
             
             # Save periodically
-            if done > 0 and done % 10 == 0:
+            if done > last_save and done % 10 == 0:
+                last_save = done
                 with lock:
                     with open(OUTPUT_PATH, "w") as f:
-                        json.dump(results, f, indent=2)
+                        json.dump(results, f)
     except KeyboardInterrupt:
         print("\n\nInterrupted! Saving progress...")
     
