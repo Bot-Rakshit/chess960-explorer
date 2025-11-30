@@ -57,6 +57,13 @@ export default function LandingPage() {
                 Explore
                 <div className="absolute inset-0 border border-white/20 scale-105 opacity-0 group-hover:opacity-100 group-hover:scale-110 transition-all duration-300" />
               </Link>
+              <Link
+                href="/challenge"
+                className="group relative px-6 sm:px-10 py-3 sm:py-5 border border-amber-500/50 text-amber-400 font-bold text-base sm:text-xl tracking-widest uppercase hover:bg-amber-500/10 transition-all hover:scale-105"
+              >
+                Challenge
+                <div className="absolute inset-0 border border-amber-500/30 scale-105 opacity-0 group-hover:opacity-100 group-hover:scale-110 transition-all duration-300" />
+              </Link>
             </div>
           </div>
 
