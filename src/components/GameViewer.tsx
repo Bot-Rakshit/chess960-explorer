@@ -139,30 +139,40 @@ export default function GameViewer({ game, startFen, onBack }: GameViewerProps) 
     // Split by [Event - each game starts with this
     const games = dbText.split(/(?=\[Event\s+")/);
     
+    // Helper to extract surname from "LastName,FirstName" format
+    const getSurname = (name: string) => name.split(',')[0].toLowerCase().trim();
+    
+    // Helper to extract header value from PGN
+    const getHeader = (pgn: string, header: string): string => {
+      const match = pgn.match(new RegExp(`\\[${header}\\s+"([^"]+)"\\]`));
+      return match ? match[1] : '';
+    };
+    
     let foundPgn = "";
     let bestScore = 0;
+    
+    const targetWhite = getSurname(game.white);
+    const targetBlack = getSurname(game.black);
     
     for (const g of games) {
       if (!g.trim()) continue;
       
+      const pgnWhite = getSurname(getHeader(g, 'White'));
+      const pgnBlack = getSurname(getHeader(g, 'Black'));
+      const pgnDate = getHeader(g, 'Date');
+      const pgnResult = getHeader(g, 'Result');
+      
       let score = 0;
       
-      // Check white player
-      if (g.includes(`[White "${game.white}"]`)) score += 10;
-      else if (game.white && g.toLowerCase().includes(game.white.toLowerCase())) score += 5;
+      // Surname match (most reliable)
+      if (pgnWhite === targetWhite) score += 10;
+      if (pgnBlack === targetBlack) score += 10;
       
-      // Check black player
-      if (g.includes(`[Black "${game.black}"]`)) score += 10;
-      else if (game.black && g.toLowerCase().includes(game.black.toLowerCase())) score += 5;
+      // Date match
+      if (game.date && pgnDate === game.date) score += 5;
       
-      // Check date
-      if (game.date && g.includes(game.date)) score += 5;
-      
-      // Check event
-      if (game.event && g.includes(game.event)) score += 3;
-      
-      // Check result
-      if (game.result && g.includes(`[Result "${game.result}"]`)) score += 2;
+      // Result match
+      if (game.result && pgnResult === game.result) score += 2;
       
       if (score > bestScore) {
         bestScore = score;
@@ -170,7 +180,8 @@ export default function GameViewer({ game, startFen, onBack }: GameViewerProps) 
       }
     }
 
-    if (foundPgn && bestScore >= 15) {
+    // Need both players + date or result to match
+    if (foundPgn && bestScore >= 22) {
       // Extract FEN from PGN (single source of truth)
       const pgnFen = extractFenFromPgn(foundPgn);
       const fenToUse = pgnFen || startFen;
