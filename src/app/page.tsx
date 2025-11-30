@@ -29,21 +29,21 @@ export default function LandingPage() {
       </header>
 
       {/* Main Hero */}
-      <main className="flex-1 flex flex-col items-center justify-center relative z-10 px-4 sm:px-6 pb-0 pt-16 sm:pt-0">
-        <div className="max-w-[1400px] w-full grid lg:grid-cols-12 gap-0 items-center h-full">
+      <main className="flex-1 flex flex-col items-center justify-center relative z-10 px-4 sm:px-6 pb-20 sm:pb-0 pt-20 sm:pt-0">
+        <div className="max-w-[1400px] w-full grid lg:grid-cols-12 gap-4 lg:gap-0 items-center">
 
           {/* Text Content */}
-          <div className="lg:col-span-5 flex flex-col justify-center space-y-6 sm:space-y-8 text-center lg:text-left relative z-20 order-2 lg:order-1 px-2 sm:pl-8">
-            <div className="space-y-4">
-              <h1 className="text-4xl sm:text-6xl xl:text-8xl font-black tracking-tighter leading-[0.85] text-white mix-blend-difference">
+          <div className="lg:col-span-5 flex flex-col justify-center space-y-4 sm:space-y-8 text-center lg:text-left relative z-20 px-2 sm:pl-8">
+            <div className="space-y-3 sm:space-y-4">
+              <h1 className="text-3xl sm:text-6xl xl:text-8xl font-black tracking-tighter leading-[0.85] text-white mix-blend-difference">
                 FREESTYLE
                 <br />
                 <span className="text-transparent bg-clip-text bg-gradient-to-r from-creme to-accent">CHESS</span>
               </h1>
 
-              <div className="h-px w-16 sm:w-24 bg-white/10 my-4 sm:my-6 mx-auto lg:mx-0" />
+              <div className="h-px w-16 sm:w-24 bg-white/10 my-3 sm:my-6 mx-auto lg:mx-0" />
 
-              <p className="text-base sm:text-xl text-creme-muted max-w-md mx-auto lg:mx-0 font-light leading-relaxed">
+              <p className="text-sm sm:text-xl text-creme-muted max-w-md mx-auto lg:mx-0 font-light leading-relaxed">
                 The ultimate 960 Explorer. <br className="hidden sm:block" />
                 <span className="text-creme">Discover, Analyze, and Master every starting position.</span>
               </p>
@@ -52,16 +52,16 @@ export default function LandingPage() {
             <div className="flex flex-col sm:flex-row items-center gap-4 sm:gap-6 justify-center lg:justify-start pt-2 sm:pt-4">
               <Link
                 href="/explore"
-                className="group relative px-8 sm:px-10 py-4 sm:py-5 bg-creme text-background font-bold text-lg sm:text-xl tracking-widest uppercase hover:bg-white transition-all hover:scale-105"
+                className="group relative px-6 sm:px-10 py-3 sm:py-5 bg-creme text-background font-bold text-base sm:text-xl tracking-widest uppercase hover:bg-white transition-all hover:scale-105"
               >
-                Initialize
+                Explore
                 <div className="absolute inset-0 border border-white/20 scale-105 opacity-0 group-hover:opacity-100 group-hover:scale-110 transition-all duration-300" />
               </Link>
             </div>
           </div>
 
           {/* Visual / Reactor Core */}
-          <div className="lg:col-span-7 relative flex justify-center items-center order-1 lg:order-2 min-h-[320px] sm:min-h-[420px] md:min-h-[500px] lg:h-full">
+          <div className="lg:col-span-7 relative flex justify-center items-center min-h-[280px] sm:min-h-[420px] md:min-h-[500px] lg:h-full">
             <HeroInteractive />
           </div>
 
