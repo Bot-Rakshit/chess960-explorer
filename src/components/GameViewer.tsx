@@ -14,7 +14,7 @@ import { parseUci } from "chessops/util";
 
 interface GameViewerProps {
   game: GMGame;
-  startFen: string;
+  pgn: string;
   onBack: () => void;
 }
 
@@ -110,96 +110,21 @@ function parsePgnMoves(pgn: string, startFen: string): MoveHistory[] {
   return history;
 }
 
-export default function GameViewer({ game, startFen, onBack }: GameViewerProps) {
+export default function GameViewer({ game, pgn, onBack }: GameViewerProps) {
   const [currentMoveIndex, setCurrentMoveIndex] = useState(-1);
-  const [history, setHistory] = useState<MoveHistory[]>([]);
-  const [gameFen, setGameFen] = useState(startFen);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
   
   const { lines, depth, analyze, stop, isReady, isThinking, multiPV, setMultiPV } = useStockfish();
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [mobileView, setMobileView] = useState<'board' | 'moves'>('board');
 
-  useEffect(() => {
-    const loadGame = async () => {
-      try {
-        const res = await fetch("/data/chess960_all_games.pgn");
-        const text = await res.text();
-        findAndLoadGame(text);
-      } catch {
-        setError("Failed to load game database.");
-        setLoading(false);
-      }
-    };
-    loadGame();
-  }, [game, startFen]);
-
-  const findAndLoadGame = (dbText: string) => {
-    // Split by [Event - each game starts with this
-    const games = dbText.split(/(?=\[Event\s+")/);
-    
-    // Helper to extract surname from "LastName,FirstName" format
-    const getSurname = (name: string) => name.split(',')[0].toLowerCase().trim();
-    
-    // Helper to extract header value from PGN
-    const getHeader = (pgn: string, header: string): string => {
-      const match = pgn.match(new RegExp(`\\[${header}\\s+"([^"]+)"\\]`));
-      return match ? match[1] : '';
-    };
-    
-    let foundPgn = "";
-    let bestScore = 0;
-    
-    const targetWhite = getSurname(game.white);
-    const targetBlack = getSurname(game.black);
-    
-    for (const g of games) {
-      if (!g.trim()) continue;
-      
-      const pgnWhite = getSurname(getHeader(g, 'White'));
-      const pgnBlack = getSurname(getHeader(g, 'Black'));
-      const pgnDate = getHeader(g, 'Date');
-      const pgnResult = getHeader(g, 'Result');
-      
-      let score = 0;
-      
-      // Surname match (most reliable)
-      if (pgnWhite === targetWhite) score += 10;
-      if (pgnBlack === targetBlack) score += 10;
-      
-      // Date match
-      if (game.date && pgnDate === game.date) score += 5;
-      
-      // Result match
-      if (game.result && pgnResult === game.result) score += 2;
-      
-      if (score > bestScore) {
-        bestScore = score;
-        foundPgn = g;
-      }
-    }
-
-    // Need both players + date or result to match
-    if (foundPgn && bestScore >= 22) {
-      // Extract FEN from PGN (single source of truth)
-      const pgnFen = extractFenFromPgn(foundPgn);
-      const fenToUse = pgnFen || startFen;
-      
-      setGameFen(fenToUse);
-      
-      const moves = parsePgnMoves(foundPgn, fenToUse);
-      setHistory(moves);
-      setCurrentMoveIndex(-1);
-      setLoading(false);
-    } else {
-      // Game not found - show starting position
-      setGameFen(startFen);
-      setHistory([]);
-      setCurrentMoveIndex(-1);
-      setLoading(false);
-    }
-  };
+  // Extract FEN from PGN (single source of truth)
+  const gameFen = useMemo(() => extractFenFromPgn(pgn) || "", [pgn]);
+  
+  // Parse moves from PGN
+  const history = useMemo(() => {
+    if (!gameFen) return [];
+    return parsePgnMoves(pgn, gameFen);
+  }, [pgn, gameFen]);
 
   const currentDisplayFen = useMemo(() => {
     if (currentMoveIndex === -1) return gameFen;
@@ -246,8 +171,7 @@ export default function GameViewer({ game, startFen, onBack }: GameViewerProps) 
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [currentMoveIndex, history.length]);
 
-  if (loading) return <div className="h-full flex items-center justify-center text-creme animate-pulse">Loading Game Data...</div>;
-  if (error) return <div className="h-full flex items-center justify-center text-rose-400">{error} <button onClick={onBack} className="ml-4 underline">Back</button></div>;
+  if (!gameFen) return <div className="h-full flex items-center justify-center text-rose-400">Invalid PGN data <button onClick={onBack} className="ml-4 underline">Back</button></div>;
 
   return (
     <div className="h-full flex flex-col bg-background">

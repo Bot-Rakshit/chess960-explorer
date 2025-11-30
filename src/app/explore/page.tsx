@@ -10,11 +10,12 @@ import { makeSan } from "chessops/san";
 
 import { Position, GMGame } from "@/types";
 import { useStockfish } from "@/hooks/useStockfish";
+import { usePgnDatabase } from "@/hooks/usePgnDatabase";
 import ChessBoard from "@/components/ChessBoard";
 import PositionList from "@/components/PositionList";
 import AnalysisPanel from "@/components/AnalysisPanel";
 import StatsPanel from "@/components/StatsPanel";
-import GameViewer from "@/components/GameViewer"; // New Component
+import GameViewer from "@/components/GameViewer";
 
 function createGame(fen: string): Chess | null {
   try {
@@ -184,9 +185,10 @@ export default function ExplorePage() {
   const gameRef = useRef<Chess | null>(null);
   const historyRef = useRef<Chess[]>([]);
 
-  const [selectedGame, setSelectedGame] = useState<GMGame | null>(null);
+  const [selectedGame, setSelectedGame] = useState<{ game: GMGame; pgn: string } | null>(null);
   
   const { lines: engineLines, depth: engineDepth, analyze: runEngine, stop: stopEngine, isReady: engineReady, isThinking, multiPV, setMultiPV } = useStockfish();
+  const { getGamesForFen, getPgnForGame, getGameStats, loading: pgnLoading } = usePgnDatabase();
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -207,6 +209,17 @@ export default function ExplorePage() {
     positions.forEach(p => p.tags?.forEach(t => tags.add(t)));
     return Array.from(tags).sort();
   }, [positions]);
+
+  // Get games and stats from PGN database for current position
+  const pgnGames = useMemo(() => {
+    if (!pos || pgnLoading) return [];
+    return getGamesForFen(pos.fen);
+  }, [pos, pgnLoading, getGamesForFen]);
+
+  const pgnStats = useMemo(() => {
+    if (!pos || pgnLoading) return null;
+    return getGameStats(pos.fen);
+  }, [pos, pgnLoading, getGameStats]);
 
   useEffect(() => {
     if (pos) {
@@ -279,11 +292,11 @@ export default function ExplorePage() {
   if (loading) return <div className="min-h-screen bg-background flex items-center justify-center text-creme-muted">Loading...</div>;
 
   // --- Game Viewer Mode ---
-  if (selectedGame && pos) {
+  if (selectedGame) {
     return (
       <GameViewer 
-        game={selectedGame} 
-        startFen={pos.fen} 
+        game={selectedGame.game} 
+        pgn={selectedGame.pgn} 
         onBack={() => setSelectedGame(null)} 
       />
     );
@@ -508,44 +521,50 @@ export default function ExplorePage() {
             onAnalyzeToggle={() => setAnalyzing(!analyzing)}
           />
 
-          <StatsPanel stats={pos?.gmStats} />
+          <StatsPanel stats={pgnStats || undefined} />
 
-          {/* Recent Games with click to view */}
-          {pos?.gmStats?.recentGames && pos.gmStats.recentGames.length > 0 && (
+          {/* Recent Games from PGN database */}
+          {pgnGames.length > 0 && (
             <div className="p-5 rounded-xl bg-surface border border-white/5">
-              <div className="text-xs text-creme-muted/70 uppercase tracking-wider mb-4">Recent Tournament Games</div>
+              <div className="text-xs text-creme-muted/70 uppercase tracking-wider mb-4">Tournament Games ({pgnGames.length})</div>
               <div className="space-y-2 max-h-72 overflow-y-auto custom-scrollbar">
-                {pos.gmStats.recentGames.slice(0, 10).map((g, i) => (
-                  <button
-                    key={i}
-                    onClick={() => setSelectedGame(g)}
-                    className="w-full text-left p-3 rounded-lg bg-background/50 border border-white/5 hover:border-accent/30 hover:bg-background transition-all group"
-                  >
-                    <div className="flex justify-between text-[10px] text-creme-muted/60 mb-2 gap-2">
-                      <div className="flex items-center gap-1.5 min-w-0 flex-1">
-                        {g.event.toLowerCase().includes("freestyle") && (
-                          <div className="relative w-3 h-3 rounded-sm overflow-hidden shrink-0 opacity-80">
-                            <Image src="/freestyle.jpeg" alt="Freestyle" fill className="object-cover" />
-                          </div>
-                        )}
-                        <span className="truncate font-medium text-creme-muted group-hover:text-creme transition-colors">{g.event}</span>
+                {pgnGames.slice(0, 10).map((g, i) => {
+                  const handleClick = () => {
+                    const pgn = getPgnForGame(g);
+                    if (pgn) setSelectedGame({ game: g, pgn });
+                  };
+                  return (
+                    <button
+                      key={i}
+                      onClick={handleClick}
+                      className="w-full text-left p-3 rounded-lg bg-background/50 border border-white/5 hover:border-accent/30 hover:bg-background transition-all group"
+                    >
+                      <div className="flex justify-between text-[10px] text-creme-muted/60 mb-2 gap-2">
+                        <div className="flex items-center gap-1.5 min-w-0 flex-1">
+                          {g.event.toLowerCase().includes("freestyle") && (
+                            <div className="relative w-3 h-3 rounded-sm overflow-hidden shrink-0 opacity-80">
+                              <Image src="/freestyle.jpeg" alt="Freestyle" fill className="object-cover" />
+                            </div>
+                          )}
+                          <span className="truncate font-medium text-creme-muted group-hover:text-creme transition-colors">{g.event}</span>
+                        </div>
+                        <span className="font-mono shrink-0">{g.date}</span>
                       </div>
-                      <span className="font-mono shrink-0">{g.date}</span>
-                    </div>
-                    <div className="flex items-center justify-between gap-2">
-                      <div className="text-sm flex items-center gap-1 min-w-0 flex-1">
-                        <span className={`truncate ${g.result === "1-0" ? "text-emerald-400 font-bold" : "text-creme"}`}>{g.white}</span>
-                        <span className="text-creme-muted text-[10px] uppercase shrink-0">vs</span>
-                        <span className={`truncate ${g.result === "0-1" ? "text-emerald-400 font-bold" : "text-creme"}`}>{g.black}</span>
+                      <div className="flex items-center justify-between gap-2">
+                        <div className="text-sm flex items-center gap-1 min-w-0 flex-1">
+                          <span className={`truncate ${g.result === "1-0" ? "text-emerald-400 font-bold" : "text-creme"}`}>{g.white}</span>
+                          <span className="text-creme-muted text-[10px] uppercase shrink-0">vs</span>
+                          <span className={`truncate ${g.result === "0-1" ? "text-emerald-400 font-bold" : "text-creme"}`}>{g.black}</span>
+                        </div>
+                        <span className={`text-[10px] font-bold px-2 py-0.5 rounded shrink-0 ${
+                          g.result === '1-0' ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : 
+                          g.result === '0-1' ? 'bg-rose-500/10 text-rose-400 border border-rose-500/20' : 
+                          'bg-white/5 text-creme-muted border border-white/10'
+                        }`}>{g.result}</span>
                       </div>
-                      <span className={`text-[10px] font-bold px-2 py-0.5 rounded shrink-0 ${
-                        g.result === '1-0' ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : 
-                        g.result === '0-1' ? 'bg-rose-500/10 text-rose-400 border border-rose-500/20' : 
-                        'bg-white/5 text-creme-muted border border-white/10'
-                      }`}>{g.result}</span>
-                    </div>
-                  </button>
-                ))}
+                    </button>
+                  );
+                })}
               </div>
             </div>
           )}
