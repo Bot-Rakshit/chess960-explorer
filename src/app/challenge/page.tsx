@@ -136,7 +136,7 @@ export default function ChallengePage() {
       attempts++;
       const game = validGames[Math.floor(Math.random() * validGames.length)];
       const moves = extractMoves(game.pgn);
-      const moveCount = 14 + Math.floor(Math.random() * 4); // 14-17 moves
+      const moveCount = 20 + Math.floor(Math.random() * 6); // 20-25 moves
 
       const positionAfterMoves = playMoves(game.fen, moves, moveCount);
       if (!positionAfterMoves) continue;
@@ -282,11 +282,13 @@ export default function ChallengePage() {
                           onClick={() => handleSelect(option.id)}
                           disabled={revealed}
                           className={`relative group transition-all duration-200 flex items-center gap-3 p-2 rounded-xl ${
-                            revealed ? "cursor-default" : "cursor-pointer hover:bg-white/5 hover:scale-105"
-                          } ${isSelected && !revealed ? "bg-amber-500/10 ring-1 ring-amber-500/30 scale-105" : ""}`}
+                            revealed ? "cursor-default" : "cursor-pointer hover:bg-white/5"
+                          } ${isSelected && !revealed ? "bg-amber-500/10 ring-1 ring-amber-500/30" : ""}`}
                         >
                           <div
-                            className={`w-[100px] sm:w-[120px] lg:w-[140px] aspect-square rounded-xl overflow-hidden border-2 transition-all duration-200 ${
+                            className={`w-[100px] sm:w-[120px] lg:w-[140px] aspect-square rounded-xl overflow-hidden border-2 transition-all duration-300 ${
+                              !revealed ? "group-hover:w-[120px] sm:group-hover:w-[140px] lg:group-hover:w-[160px]" : ""
+                            } ${
                               showCorrect
                                 ? "border-emerald-500 shadow-lg shadow-emerald-500/30"
                                 : showWrong
