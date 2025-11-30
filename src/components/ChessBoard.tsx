@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import React, { useState, useMemo } from "react";
 import { Chessboard } from "react-chessboard";
 import type { Square, PromotionPieceOption, Piece } from "react-chessboard/dist/chessboard/types";
 
@@ -31,13 +31,13 @@ export default function ChessBoard({
   const [pendingMove, setPendingMove] = useState<{ from: Square; to: Square } | null>(null);
 
   const customPieces = useMemo(() => {
-    const pieces: Record<string, ({ squareWidth }: { squareWidth: number }) => JSX.Element> = {};
+    const pieces: Record<string, ({ squareWidth }: { squareWidth: number }) => React.ReactElement> = {};
     const pieceTypes: Piece[] = ["wP", "wN", "wB", "wR", "wQ", "wK", "bP", "bN", "bB", "bR", "bQ", "bK"];
     
     pieceTypes.forEach((piece) => {
       const color = piece[0].toLowerCase();
       const type = piece[1].toLowerCase();
-      pieces[piece] = ({ squareWidth }) => (
+      pieces[piece] = ({ squareWidth }: { squareWidth: number }) => (
         <img
           src={`/pieces/${pieceSet}/${color}${type}.svg`}
           alt={piece}
