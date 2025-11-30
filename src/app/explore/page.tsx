@@ -168,7 +168,7 @@ function PgnViewer({ game, startFen, onClose }: PgnViewerProps) {
 
 export default function ExplorePage() {
   const [positions, setPositions] = useState<Position[]>([]);
-  const [currentId, setCurrentId] = useState(518);
+  const [currentId, setCurrentId] = useState(() => Math.floor(Math.random() * 960));
   const [loading, setLoading] = useState(true);
   const [spinning, setSpinning] = useState(false);
   
@@ -507,31 +507,30 @@ export default function ExplorePage() {
                 </div>
               )}
 
-              {/* Stockfish Evaluation */}
-              {pos.eval && pos.eval.pvs && pos.eval.pvs.length > 0 && (
-                <div className="p-4 rounded-xl bg-surface border border-white/5">
-                  <div className="flex items-center justify-between mb-3">
-                    <div className="text-[10px] text-creme-muted/50 uppercase tracking-widest font-medium">Stockfish Eval</div>
-                    <div className="text-[10px] text-creme-muted/40">depth {pos.eval.depth}</div>
+              {/* Stockfish Evaluation Bar */}
+              {pos.eval && pos.eval.pvs && pos.eval.pvs.length > 0 && (() => {
+                const pv = pos.eval.pvs[0];
+                const evalNum = pv.mate ? (pv.mate > 0 ? 10 : -10) : pv.eval;
+                const evalScore = pv.mate ? `M${Math.abs(pv.mate)}` : (pv.eval >= 0 ? `+${pv.eval.toFixed(2)}` : pv.eval.toFixed(2));
+                const whitePercent = Math.min(100, Math.max(0, 50 + evalNum * 10));
+                return (
+                  <div className="p-4 rounded-xl bg-surface border border-white/5">
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="text-[10px] text-creme-muted/50 uppercase tracking-widest font-medium">Stockfish Eval</div>
+                      <div className="text-[10px] text-creme-muted/40">depth {pos.eval.depth}</div>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <div className="flex-1 h-6 rounded overflow-hidden flex">
+                        <div className="bg-white transition-all duration-300" style={{ width: `${whitePercent}%` }} />
+                        <div className="bg-zinc-800 flex-1" />
+                      </div>
+                      <div className={`w-16 text-center py-1 rounded text-sm font-bold ${evalNum >= 0 ? 'text-white' : 'text-zinc-400'}`}>
+                        {evalScore}
+                      </div>
+                    </div>
                   </div>
-                  <div className="space-y-2">
-                    {pos.eval.pvs.map((pv, idx: number) => {
-                      const evalScore = pv.mate ? `M${pv.mate}` : (pv.eval >= 0 ? `+${pv.eval.toFixed(2)}` : pv.eval.toFixed(2));
-                      const isPositive = pv.mate ? pv.mate > 0 : pv.eval >= 0;
-                      return (
-                        <div key={idx} className="flex items-center gap-3">
-                          <div className={`w-14 text-center py-1 rounded text-xs font-bold ${isPositive ? 'bg-emerald-500/20 text-emerald-400' : 'bg-rose-500/20 text-rose-400'}`}>
-                            {evalScore}
-                          </div>
-                          <div className="flex-1 text-xs text-creme-muted font-mono truncate">
-                            {pos.pvSan ? pos.pvSan.slice(0, 6).join(' ') : pv.moves.split(' ').slice(0, 6).join(' ')}
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-              )}
+                );
+              })()}
 
             </div>
           )}
