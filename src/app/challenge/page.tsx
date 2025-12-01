@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import Link from "next/link";
 import { Chess } from "chessops/chess";
 import { parseFen, makeFen } from "chessops/fen";
@@ -8,6 +8,8 @@ import { parseSan } from "chessops/san";
 import ChessBoard from "@/components/ChessBoard";
 import Header from "@/components/Header";
 import Loader from "@/components/Loader";
+
+const LONG_PRESS_DURATION = 400;
 
 interface GameData {
   pgn: string;
@@ -96,6 +98,9 @@ export default function ChallengePage() {
   const [streak, setStreak] = useState(0);
   const [bestStreak, setBestStreak] = useState(0);
   const [totalPlayed, setTotalPlayed] = useState(0);
+  const [zoomedOption, setZoomedOption] = useState<Position | null>(null);
+  const longPressTimer = useRef<NodeJS.Timeout | null>(null);
+  const longPressTriggered = useRef(false);
 
   // Load best streak from localStorage
   useEffect(() => {
@@ -174,8 +179,23 @@ export default function ChallengePage() {
   }, [loading, gamesDb, positions, challenge, generateChallenge]);
 
   const handleSelect = (posId: number) => {
-    if (revealed) return;
+    if (revealed || longPressTriggered.current) return;
     setSelected(posId);
+  };
+
+  const handleLongPressStart = (option: Position) => {
+    longPressTriggered.current = false;
+    longPressTimer.current = setTimeout(() => {
+      longPressTriggered.current = true;
+      setZoomedOption(option);
+    }, LONG_PRESS_DURATION);
+  };
+
+  const handleLongPressEnd = () => {
+    if (longPressTimer.current) {
+      clearTimeout(longPressTimer.current);
+      longPressTimer.current = null;
+    }
   };
 
   const handleReveal = () => {
@@ -241,7 +261,7 @@ export default function ChallengePage() {
 
                 {/* Options Panel */}
                 <div className="flex flex-col items-center w-full lg:w-auto">
-                  <div className="text-xs sm:text-sm text-creme-muted mb-3 sm:mb-4">Which starting position?</div>
+                  <div className="text-sm sm:text-base text-creme mb-3 sm:mb-4 font-medium">Which starting position?</div>
                   <div className="grid grid-cols-3 gap-2 sm:gap-3 w-full max-w-[320px] lg:flex lg:flex-col lg:max-w-none lg:w-auto">
                     {challenge.options.map((option, idx) => {
                       const isSelected = selected === option.id;
@@ -260,6 +280,12 @@ export default function ChallengePage() {
                         <button
                           key={option.id}
                           onClick={() => handleSelect(option.id)}
+                          onTouchStart={() => handleLongPressStart(option)}
+                          onTouchEnd={handleLongPressEnd}
+                          onTouchCancel={handleLongPressEnd}
+                          onMouseDown={() => handleLongPressStart(option)}
+                          onMouseUp={handleLongPressEnd}
+                          onMouseLeave={handleLongPressEnd}
                           disabled={revealed}
                           className={`relative group transition-all duration-200 flex flex-col lg:flex-row items-center gap-1.5 lg:gap-3 p-1.5 sm:p-2 rounded-lg ${
                             revealed ? "cursor-default" : "cursor-pointer active:scale-95 lg:hover:bg-[#1a1a1a]"
@@ -285,14 +311,14 @@ export default function ChallengePage() {
                             />
                           </div>
                           <div
-                            className={`text-xs sm:text-sm font-medium transition-colors ${
+                            className={`text-xs sm:text-sm font-semibold transition-colors ${
                               showCorrect
                                 ? "text-green-500"
                                 : showWrong
                                 ? "text-red-500"
                                 : isSelected
                                 ? "text-amber-500"
-                                : "text-[#888]"
+                                : "text-creme/70"
                             }`}
                           >
                             #{option.id}
@@ -314,6 +340,11 @@ export default function ChallengePage() {
                         </button>
                       );
                     })}
+                  </div>
+                  
+                  {/* Long press hint */}
+                  <div className="text-[11px] sm:text-xs text-creme/40 mt-2 text-center">
+                    Hold to enlarge
                   </div>
 
                   {/* Feedback Message - Mobile */}
@@ -367,7 +398,7 @@ export default function ChallengePage() {
                   {revealed && challenge && (
                     <Link
                       href={`/explore?position=${challenge.correctPosition.id}`}
-                      className="lg:hidden mt-2 text-center text-xs sm:text-sm text-[#888] hover:text-amber-500 active:text-amber-500 transition-colors"
+                      className="lg:hidden mt-2 text-center text-xs sm:text-sm text-creme/60 hover:text-amber-500 active:text-amber-500 transition-colors"
                     >
                       Explore Position →
                     </Link>
@@ -382,22 +413,22 @@ export default function ChallengePage() {
             {/* Stats Grid */}
             <div className="grid grid-cols-4 lg:grid-cols-2 gap-1.5 sm:gap-3 w-full">
               <div className="text-center p-2 sm:p-3 rounded-lg bg-[#1a1a1a] border border-[#2a2a2a]">
-                <div className="text-lg sm:text-xl lg:text-2xl font-bold">{score}</div>
-                <div className="text-[8px] sm:text-[10px] text-[#666] uppercase tracking-wide">Correct</div>
+                <div className="text-lg sm:text-xl lg:text-2xl font-bold text-creme">{score}</div>
+                <div className="text-[9px] sm:text-[11px] text-creme/50 uppercase tracking-wide">Correct</div>
               </div>
               <div className="text-center p-2 sm:p-3 rounded-lg bg-[#1a1a1a] border border-amber-500/30">
                 <div className="text-lg sm:text-xl lg:text-2xl font-bold text-amber-500">{streak}</div>
-                <div className="text-[8px] sm:text-[10px] text-[#666] uppercase tracking-wide">Streak</div>
+                <div className="text-[9px] sm:text-[11px] text-creme/50 uppercase tracking-wide">Streak</div>
               </div>
               <div className="text-center p-2 sm:p-3 rounded-lg bg-[#1a1a1a] border border-[#2a2a2a]">
-                <div className="text-lg sm:text-xl lg:text-2xl font-bold text-[#888]">{bestStreak}</div>
-                <div className="text-[8px] sm:text-[10px] text-[#666] uppercase tracking-wide">Best</div>
+                <div className="text-lg sm:text-xl lg:text-2xl font-bold text-creme/70">{bestStreak}</div>
+                <div className="text-[9px] sm:text-[11px] text-creme/50 uppercase tracking-wide">Best</div>
               </div>
               <div className="text-center p-2 sm:p-3 rounded-lg bg-[#1a1a1a] border border-[#2a2a2a]">
-                <div className="text-lg sm:text-xl lg:text-2xl font-bold text-[#888]">
+                <div className="text-lg sm:text-xl lg:text-2xl font-bold text-creme/70">
                   {totalPlayed > 0 ? Math.round((score / totalPlayed) * 100) : 0}%
                 </div>
-                <div className="text-[8px] sm:text-[10px] text-[#666] uppercase tracking-wide">Accuracy</div>
+                <div className="text-[9px] sm:text-[11px] text-creme/50 uppercase tracking-wide">Accuracy</div>
               </div>
             </div>
 
@@ -423,7 +454,7 @@ export default function ChallengePage() {
                 )}
                 <Link
                   href={`/explore?position=${challenge.correctPosition.id}`}
-                  className="mt-3 block text-center text-sm text-[#888] hover:text-amber-500 transition-colors"
+                  className="mt-3 block text-center text-sm text-creme/60 hover:text-amber-500 transition-colors"
                 >
                   Explore Position →
                 </Link>
@@ -431,13 +462,39 @@ export default function ChallengePage() {
             )}
 
             {/* Instructions */}
-            <div className="hidden lg:block text-sm text-[#666] leading-relaxed">
-              <p className="mb-2 font-medium text-[#888]">How to play:</p>
+            <div className="hidden lg:block text-sm text-creme/50 leading-relaxed">
+              <p className="mb-2 font-medium text-creme/70">How to play:</p>
               <p>Identify the starting position from the game state shown.</p>
+              <p className="mt-2 text-xs text-creme/40">Hold an option to enlarge it.</p>
             </div>
           </div>
         </div>
       </main>
+
+      {/* Zoom Popup Modal */}
+      {zoomedOption && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4"
+          onClick={() => setZoomedOption(null)}
+          onTouchEnd={() => setZoomedOption(null)}
+        >
+          <div className="relative w-full max-w-[340px] sm:max-w-[400px]">
+            <div className="aspect-square rounded-xl overflow-hidden border-2 border-white/20 shadow-2xl">
+              <ChessBoard
+                fen={zoomedOption.fen}
+                arePiecesDraggable={false}
+                id="zoomed-option"
+              />
+            </div>
+            <div className="text-center mt-4">
+              <span className="text-lg sm:text-xl font-bold text-creme">Position #{zoomedOption.id}</span>
+            </div>
+            <div className="text-center mt-2 text-sm text-creme/60">
+              Tap anywhere to close
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
