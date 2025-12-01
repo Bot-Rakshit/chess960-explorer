@@ -207,25 +207,25 @@ export default function ChallengePage() {
     <div className="min-h-screen bg-background text-creme">
       <Header />
 
-      <main className="h-[calc(100vh-57px)] overflow-hidden">
+      <main className="min-h-[calc(100vh-57px)] lg:h-[calc(100vh-57px)] lg:overflow-hidden">
         <div className="h-full flex flex-col lg:flex-row">
           {/* Main Game Area */}
-          <div className="flex-1 flex items-center justify-center p-4 lg:p-6 overflow-y-auto">
+          <div className="flex-1 flex items-center justify-center p-3 sm:p-4 lg:p-6 overflow-y-auto">
             {challenge && (
-              <div className="flex flex-col lg:flex-row items-center gap-6 lg:gap-10">
+              <div className="flex flex-col items-center gap-4 sm:gap-6 w-full max-w-[480px] lg:max-w-none lg:flex-row lg:gap-10">
                 {/* Current Position */}
-                <div className="flex flex-col items-center">
-                  <div className="text-center mb-4">
-                    <div className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-surface border border-white/10 mb-2">
-                      <span className="font-semibold">{getPlayerSurname(challenge.game.white)}</span>
-                      <span className="text-creme-muted/60">vs</span>
-                      <span className="font-semibold">{getPlayerSurname(challenge.game.black)}</span>
+                <div className="flex flex-col items-center w-full lg:w-auto">
+                  <div className="text-center mb-3 sm:mb-4">
+                    <div className="inline-flex items-center gap-2 px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg bg-surface border border-white/10 mb-1.5 sm:mb-2">
+                      <span className="font-semibold text-sm sm:text-base">{getPlayerSurname(challenge.game.white)}</span>
+                      <span className="text-creme-muted/60 text-sm">vs</span>
+                      <span className="font-semibold text-sm sm:text-base">{getPlayerSurname(challenge.game.black)}</span>
                     </div>
-                    <div className="text-xs text-creme-muted/60">
+                    <div className="text-[10px] sm:text-xs text-creme-muted/60">
                       {challenge.game.event} • {challenge.game.date}
                     </div>
                   </div>
-                  <div className="w-[300px] sm:w-[360px] lg:w-[420px] xl:w-[480px]">
+                  <div className="w-full max-w-[280px] sm:max-w-[320px] lg:w-[380px] xl:w-[440px]">
                     <div className="aspect-square rounded-xl overflow-hidden border border-white/10">
                       <ChessBoard
                         fen={challenge.positionAfterMoves}
@@ -233,16 +233,16 @@ export default function ChallengePage() {
                         id="current-position"
                       />
                     </div>
-                    <div className="text-center mt-3 text-sm text-creme-muted">
+                    <div className="text-center mt-2 sm:mt-3 text-xs sm:text-sm text-creme-muted">
                       After <span className="text-accent font-semibold">{challenge.moveCount}</span> moves
                     </div>
                   </div>
                 </div>
 
                 {/* Options Panel */}
-                <div className="flex flex-col items-center">
-                  <div className="text-sm text-creme-muted mb-4">Which starting position?</div>
-                  <div className="flex flex-row lg:flex-col gap-3">
+                <div className="flex flex-col items-center w-full lg:w-auto">
+                  <div className="text-xs sm:text-sm text-creme-muted mb-3 sm:mb-4">Which starting position?</div>
+                  <div className="grid grid-cols-3 gap-2 sm:gap-3 w-full max-w-[320px] lg:flex lg:flex-col lg:max-w-none lg:w-auto">
                     {challenge.options.map((option, idx) => {
                       const isSelected = selected === option.id;
                       const isCorrect = option.id === challenge.correctPosition.id;
@@ -261,21 +261,19 @@ export default function ChallengePage() {
                           key={option.id}
                           onClick={() => handleSelect(option.id)}
                           disabled={revealed}
-                          className={`relative group transition-all duration-200 flex items-center gap-3 p-2 rounded-lg ${
-                            revealed ? "cursor-default" : "cursor-pointer hover:bg-[#1a1a1a]"
-                          } ${isSelected && !revealed ? "bg-[#1a1a1a] ring-1 ring-amber-500/50" : ""}`}
+                          className={`relative group transition-all duration-200 flex flex-col lg:flex-row items-center gap-1.5 lg:gap-3 p-1.5 sm:p-2 rounded-lg ${
+                            revealed ? "cursor-default" : "cursor-pointer active:scale-95 lg:hover:bg-[#1a1a1a]"
+                          } ${isSelected && !revealed ? "bg-[#1a1a1a] ring-2 ring-amber-500/70" : ""}`}
                         >
                           <div
-                            className={`w-[100px] sm:w-[120px] lg:w-[140px] aspect-square rounded-lg overflow-hidden border transition-all duration-300 ${
-                              !revealed ? "group-hover:w-[120px] sm:group-hover:w-[140px] lg:group-hover:w-[160px]" : ""
-                            } ${
+                            className={`w-full lg:w-[120px] xl:w-[140px] aspect-square rounded-lg overflow-hidden border-2 transition-all duration-300 ${
                               showCorrect
                                 ? "border-green-500"
                                 : showWrong
                                 ? "border-red-500"
                                 : isSelected
                                 ? "border-amber-500"
-                                : "border-[#2a2a2a] group-hover:border-[#3a3a3a]"
+                                : "border-[#2a2a2a]"
                             }`}
                           >
                             <ChessBoard
@@ -287,28 +285,28 @@ export default function ChallengePage() {
                             />
                           </div>
                           <div
-                            className={`text-sm font-medium transition-colors ${
+                            className={`text-xs sm:text-sm font-medium transition-colors ${
                               showCorrect
                                 ? "text-green-500"
                                 : showWrong
                                 ? "text-red-500"
                                 : isSelected
                                 ? "text-amber-500"
-                                : "text-[#888] group-hover:text-white"
+                                : "text-[#888]"
                             }`}
                           >
                             #{option.id}
                           </div>
                           {showCorrect && (
-                            <div className="absolute -top-1.5 -right-1.5 w-6 h-6 rounded-full bg-green-500 flex items-center justify-center">
-                              <svg className="w-3.5 h-3.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <div className="absolute -top-1 -right-1 w-5 h-5 sm:w-6 sm:h-6 rounded-full bg-green-500 flex items-center justify-center">
+                              <svg className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
                               </svg>
                             </div>
                           )}
                           {showWrong && (
-                            <div className="absolute -top-1.5 -right-1.5 w-6 h-6 rounded-full bg-red-500 flex items-center justify-center">
-                              <svg className="w-3.5 h-3.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <div className="absolute -top-1 -right-1 w-5 h-5 sm:w-6 sm:h-6 rounded-full bg-red-500 flex items-center justify-center">
+                              <svg className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M6 18L18 6M6 6l12 12" />
                               </svg>
                             </div>
@@ -318,16 +316,39 @@ export default function ChallengePage() {
                     })}
                   </div>
 
+                  {/* Feedback Message - Mobile */}
+                  {revealed && challenge && (
+                    <div className="lg:hidden mt-3 w-full max-w-[320px]">
+                      {selected === challenge.correctPosition.id ? (
+                        <div className="flex items-center justify-center gap-2 p-2.5 rounded-lg bg-green-500/10 border border-green-500/20">
+                          <svg className="w-4 h-4 text-green-500 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                          </svg>
+                          <span className="text-green-500 text-sm font-medium">Correct!</span>
+                        </div>
+                      ) : (
+                        <div className="flex items-center justify-center gap-2 p-2.5 rounded-lg bg-red-500/10 border border-red-500/20">
+                          <svg className="w-4 h-4 text-red-500 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                          </svg>
+                          <span className="text-red-500 text-sm font-medium">
+                            It was #{challenge.correctPosition.id}
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
                   {/* Action Button */}
-                  <div className="flex justify-center mt-5">
+                  <div className="flex justify-center mt-4 sm:mt-5 w-full">
                     {!revealed ? (
                       <button
                         onClick={handleReveal}
                         disabled={selected === null}
-                        className={`px-8 py-2.5 rounded-lg font-semibold transition-colors ${
+                        className={`w-full max-w-[280px] sm:w-auto px-8 py-3 sm:py-2.5 rounded-lg font-semibold transition-colors text-sm sm:text-base ${
                           selected === null
                             ? "bg-[#1a1a1a] text-[#666] cursor-not-allowed"
-                            : "bg-amber-500 text-black hover:bg-amber-400"
+                            : "bg-amber-500 text-black active:bg-amber-600 sm:hover:bg-amber-400"
                         }`}
                       >
                         Check Answer
@@ -335,42 +356,52 @@ export default function ChallengePage() {
                     ) : (
                       <button
                         onClick={handleNext}
-                        className="px-8 py-2.5 rounded-lg font-semibold bg-amber-500 text-black hover:bg-amber-400 transition-colors"
+                        className="w-full max-w-[280px] sm:w-auto px-8 py-3 sm:py-2.5 rounded-lg font-semibold bg-amber-500 text-black active:bg-amber-600 sm:hover:bg-amber-400 transition-colors text-sm sm:text-base"
                       >
                         Next Challenge →
                       </button>
                     )}
                   </div>
+
+                  {/* Explore Link - Mobile */}
+                  {revealed && challenge && (
+                    <Link
+                      href={`/explore?position=${challenge.correctPosition.id}`}
+                      className="lg:hidden mt-2 text-center text-xs sm:text-sm text-[#888] hover:text-amber-500 active:text-amber-500 transition-colors"
+                    >
+                      Explore Position →
+                    </Link>
+                  )}
                 </div>
               </div>
             )}
           </div>
 
-          {/* Right: Stats Panel */}
-          <div className="w-full lg:w-64 border-t lg:border-t-0 lg:border-l border-[#2a2a2a] bg-[#0f0f0f] p-4 lg:p-5 flex flex-row lg:flex-col gap-4 lg:gap-5 justify-center lg:justify-start">
+          {/* Stats Panel - Fixed at bottom on mobile */}
+          <div className="w-full lg:w-64 border-t lg:border-t-0 lg:border-l border-[#2a2a2a] bg-[#0f0f0f] p-3 sm:p-4 lg:p-5 flex flex-row lg:flex-col gap-2 sm:gap-4 lg:gap-5 justify-center lg:justify-start">
             {/* Stats Grid */}
-            <div className="grid grid-cols-4 lg:grid-cols-2 gap-3 w-full max-w-md lg:max-w-none">
-              <div className="text-center p-3 rounded-lg bg-[#1a1a1a] border border-[#2a2a2a]">
-                <div className="text-xl lg:text-2xl font-bold">{score}</div>
-                <div className="text-[10px] text-[#666] uppercase tracking-wide">Correct</div>
+            <div className="grid grid-cols-4 lg:grid-cols-2 gap-1.5 sm:gap-3 w-full">
+              <div className="text-center p-2 sm:p-3 rounded-lg bg-[#1a1a1a] border border-[#2a2a2a]">
+                <div className="text-lg sm:text-xl lg:text-2xl font-bold">{score}</div>
+                <div className="text-[8px] sm:text-[10px] text-[#666] uppercase tracking-wide">Correct</div>
               </div>
-              <div className="text-center p-3 rounded-lg bg-[#1a1a1a] border border-amber-500/30">
-                <div className="text-xl lg:text-2xl font-bold text-amber-500">{streak}</div>
-                <div className="text-[10px] text-[#666] uppercase tracking-wide">Streak</div>
+              <div className="text-center p-2 sm:p-3 rounded-lg bg-[#1a1a1a] border border-amber-500/30">
+                <div className="text-lg sm:text-xl lg:text-2xl font-bold text-amber-500">{streak}</div>
+                <div className="text-[8px] sm:text-[10px] text-[#666] uppercase tracking-wide">Streak</div>
               </div>
-              <div className="text-center p-3 rounded-lg bg-[#1a1a1a] border border-[#2a2a2a]">
-                <div className="text-xl lg:text-2xl font-bold text-[#888]">{bestStreak}</div>
-                <div className="text-[10px] text-[#666] uppercase tracking-wide">Best</div>
+              <div className="text-center p-2 sm:p-3 rounded-lg bg-[#1a1a1a] border border-[#2a2a2a]">
+                <div className="text-lg sm:text-xl lg:text-2xl font-bold text-[#888]">{bestStreak}</div>
+                <div className="text-[8px] sm:text-[10px] text-[#666] uppercase tracking-wide">Best</div>
               </div>
-              <div className="text-center p-3 rounded-lg bg-[#1a1a1a] border border-[#2a2a2a]">
-                <div className="text-xl lg:text-2xl font-bold text-[#888]">
+              <div className="text-center p-2 sm:p-3 rounded-lg bg-[#1a1a1a] border border-[#2a2a2a]">
+                <div className="text-lg sm:text-xl lg:text-2xl font-bold text-[#888]">
                   {totalPlayed > 0 ? Math.round((score / totalPlayed) * 100) : 0}%
                 </div>
-                <div className="text-[10px] text-[#666] uppercase tracking-wide">Accuracy</div>
+                <div className="text-[8px] sm:text-[10px] text-[#666] uppercase tracking-wide">Accuracy</div>
               </div>
             </div>
 
-            {/* Feedback Message */}
+            {/* Feedback Message - Desktop */}
             {revealed && challenge && (
               <div className="hidden lg:block">
                 {selected === challenge.correctPosition.id ? (
