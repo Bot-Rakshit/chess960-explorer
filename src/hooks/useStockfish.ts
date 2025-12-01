@@ -42,6 +42,12 @@ export function useStockfish() {
                             // Only accept lines within current multiPV setting
                             if (multipv > multiPVRef.current) return;
 
+                            // Stockfish reports from side-to-move perspective
+                            // Normalize to white's perspective (positive = white advantage)
+                            const isBlackToMove = currentFenRef.current.includes(' b ');
+                            const normalizedScore = isBlackToMove ? -scoreVal : scoreVal;
+                            const normalizedMate = isBlackToMove ? -scoreVal : scoreVal;
+
                             setLines(prev => {
                                 const newLines = [...prev].slice(0, multiPVRef.current);
                                 // Ensure array is large enough
@@ -49,8 +55,8 @@ export function useStockfish() {
 
                                 newLines[multipv - 1] = {
                                     moves: pv.join(' '),
-                                    eval: scoreType === 'cp' ? scoreVal / 100 : 0,
-                                    mate: scoreType === 'mate' ? scoreVal : null,
+                                    eval: scoreType === 'cp' ? normalizedScore / 100 : 0,
+                                    mate: scoreType === 'mate' ? normalizedMate : null,
                                 };
                                 return newLines;
                             });
