@@ -230,11 +230,11 @@ export default function ChallengePage() {
       <main className="min-h-[calc(100vh-57px)] lg:h-[calc(100vh-57px)] lg:overflow-hidden">
         <div className="h-full flex flex-col lg:flex-row">
           {/* Main Game Area */}
-          <div className="flex-1 flex items-center justify-center p-3 sm:p-4 lg:p-6 overflow-y-auto">
+          <div className="flex-1 flex items-center justify-center p-3 sm:p-4 lg:p-8 xl:p-10 overflow-y-auto">
             {challenge && (
-              <div className="flex flex-col items-center gap-4 sm:gap-6 w-full max-w-[480px] lg:max-w-none lg:flex-row lg:gap-10">
+              <div className="flex flex-col items-center gap-4 sm:gap-6 w-full max-w-[480px] lg:max-w-5xl lg:flex-row lg:items-center lg:justify-center lg:gap-12 xl:gap-20">
                 {/* Current Position */}
-                <div className="flex flex-col items-center w-full lg:w-auto">
+                <div className="flex flex-col items-center w-full lg:w-auto lg:flex-1 lg:max-w-[520px]">
                   <div className="text-center mb-3 sm:mb-4">
                     <div className="inline-flex items-center gap-2 px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg bg-surface border border-white/10 mb-1.5 sm:mb-2">
                       <span className="font-semibold text-sm sm:text-base">{getPlayerSurname(challenge.game.white)}</span>
@@ -245,7 +245,7 @@ export default function ChallengePage() {
                       {challenge.game.event} • {challenge.game.date}
                     </div>
                   </div>
-                  <div className="w-full max-w-[280px] sm:max-w-[320px] lg:w-[380px] xl:w-[440px]">
+                  <div className="w-full max-w-[280px] sm:max-w-[320px] lg:max-w-none lg:w-full">
                     <div className="aspect-square rounded-xl overflow-hidden border border-white/10">
                       <ChessBoard
                         fen={challenge.positionAfterMoves}
@@ -260,9 +260,9 @@ export default function ChallengePage() {
                 </div>
 
                 {/* Options Panel */}
-                <div className="flex flex-col items-center w-full lg:w-auto">
+                <div className="flex flex-col items-center w-full lg:w-auto lg:min-w-[200px]">
                   <div className="text-sm sm:text-base text-creme mb-3 sm:mb-4 font-medium">Which starting position?</div>
-                  <div className="grid grid-cols-3 gap-2 sm:gap-3 w-full max-w-[320px] lg:flex lg:flex-col lg:max-w-none lg:w-auto">
+                  <div className="grid grid-cols-3 gap-2 sm:gap-3 w-full max-w-[320px] lg:flex lg:flex-col lg:max-w-none lg:w-auto lg:gap-4">
                     {challenge.options.map((option, idx) => {
                       const isSelected = selected === option.id;
                       const isCorrect = option.id === challenge.correctPosition.id;
@@ -292,7 +292,7 @@ export default function ChallengePage() {
                           } ${isSelected && !revealed ? "bg-[#1a1a1a] ring-2 ring-amber-500/70" : ""}`}
                         >
                           <div
-                            className={`w-full lg:w-[120px] xl:w-[140px] aspect-square rounded-lg overflow-hidden border-2 transition-all duration-300 ${
+                            className={`w-full lg:w-[140px] xl:w-[160px] aspect-square rounded-lg overflow-hidden border-2 transition-all duration-300 ${
                               showCorrect
                                 ? "border-green-500"
                                 : showWrong
@@ -409,7 +409,7 @@ export default function ChallengePage() {
           </div>
 
           {/* Stats Panel - Fixed at bottom on mobile */}
-          <div className="w-full lg:w-64 border-t lg:border-t-0 lg:border-l border-[#2a2a2a] bg-[#0f0f0f] p-3 sm:p-4 lg:p-5 flex flex-row lg:flex-col gap-2 sm:gap-4 lg:gap-5 justify-center lg:justify-start">
+          <div className="w-full lg:w-72 xl:w-80 border-t lg:border-t-0 lg:border-l border-[#2a2a2a] bg-[#0f0f0f] p-3 sm:p-4 lg:p-6 flex flex-row lg:flex-col gap-2 sm:gap-4 lg:gap-5 justify-center lg:justify-start">
             {/* Stats Grid */}
             <div className="grid grid-cols-4 lg:grid-cols-2 gap-1.5 sm:gap-3 w-full">
               <div className="text-center p-2 sm:p-3 rounded-lg bg-[#1a1a1a] border border-[#2a2a2a]">
