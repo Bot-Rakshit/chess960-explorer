@@ -57,6 +57,7 @@ export default function BotGame({ startFen, positionId, onBack }: BotGameProps) 
     const [lastMove, setLastMove] = useState<{ from: string; to: string } | null>(null);
     const [takebackUsed, setTakebackUsed] = useState(false);
     const [drawOffered, setDrawOffered] = useState(false);
+    const [viewIndex, setViewIndex] = useState<number | null>(null);
     
     const [whiteTime, setWhiteTime] = useState(600);
     const [blackTime, setBlackTime] = useState(600);
@@ -73,6 +74,51 @@ export default function BotGame({ startFen, positionId, onBack }: BotGameProps) 
     }, [currentFen]);
 
     const isPlayerTurn = currentTurn === playerColor;
+
+    // Display state for viewing history
+    const displayFen = useMemo(() => {
+        if (viewIndex === null) return currentFen;
+        if (viewIndex === -1) return startFen;
+        return moves[viewIndex]?.fen || currentFen;
+    }, [viewIndex, currentFen, startFen, moves]);
+
+    const displayLastMove = useMemo(() => {
+        if (viewIndex === null) return lastMove;
+        if (viewIndex === -1) return null;
+        const move = moves[viewIndex];
+        if (!move) return null;
+        const uci = move.uci;
+        return { from: uci.slice(0, 2), to: uci.slice(2, 4) };
+    }, [viewIndex, lastMove, moves]);
+
+    // Keyboard navigation
+    useEffect(() => {
+        const handleKeyDown = (e: KeyboardEvent) => {
+            if (e.key === 'ArrowLeft') {
+                e.preventDefault();
+                setViewIndex(prev => {
+                    if (prev === null) return moves.length > 0 ? moves.length - 1 : null;
+                    if (prev <= -1) return -1;
+                    return prev - 1;
+                });
+            } else if (e.key === 'ArrowRight') {
+                e.preventDefault();
+                setViewIndex(prev => {
+                    if (prev === null) return null;
+                    if (prev >= moves.length - 1) return null;
+                    return prev + 1;
+                });
+            } else if (e.key === 'ArrowUp') {
+                e.preventDefault();
+                setViewIndex(-1);
+            } else if (e.key === 'ArrowDown') {
+                e.preventDefault();
+                setViewIndex(null);
+            }
+        };
+        window.addEventListener('keydown', handleKeyDown);
+        return () => window.removeEventListener('keydown', handleKeyDown);
+    }, [moves.length]);
 
     useEffect(() => {
         try {
@@ -155,6 +201,7 @@ export default function BotGame({ startFen, positionId, onBack }: BotGameProps) 
             const newFen = makeFen(gameRef.current.toSetup());
             setCurrentFen(newFen);
             setMoves(prev => [...prev, { san, fen: newFen, uci }]);
+            setViewIndex(null);
             
             if ('from' in move) {
                 const from = makeSquare(move.from);
@@ -310,6 +357,7 @@ export default function BotGame({ startFen, positionId, onBack }: BotGameProps) 
         setMoves([]);
         setTakebackUsed(false);
         setDrawOffered(false);
+        setViewIndex(null);
         setWhiteTime(600);
         setBlackTime(600);
         setCurrentFen(startFen);
@@ -500,13 +548,18 @@ export default function BotGame({ startFen, positionId, onBack }: BotGameProps) 
                     {/* Chess board */}
                     <div className="w-full max-w-[320px] sm:max-w-[400px] lg:max-w-[500px] aspect-square">
                         <ChessBoard
-                            fen={currentFen}
+                            fen={displayFen}
                             onPieceDrop={handleDrop}
-                            arePiecesDraggable={isPlayerTurn && result === "playing"}
+                            arePiecesDraggable={isPlayerTurn && result === "playing" && viewIndex === null}
                             orientation={playerColor}
-                            lastMove={lastMove}
+                            lastMove={displayLastMove}
                         />
                     </div>
+                    {viewIndex !== null && (
+                        <div className="mt-2 px-3 py-1.5 rounded-lg bg-amber-500/20 border border-amber-500/30 text-amber-400 text-xs">
+                            Viewing move {viewIndex + 1} of {moves.length} - Press → or ↓ to return
+                        </div>
+                    )}
 
                     {/* Player info bar */}
                     <div className={`w-full max-w-[320px] sm:max-w-[400px] mt-2 flex items-center justify-between px-3 py-2 rounded-lg ${

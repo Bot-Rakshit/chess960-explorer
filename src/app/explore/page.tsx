@@ -390,6 +390,21 @@ export default function ExplorePage() {
     }
   };
 
+  // Keyboard navigation for move history
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'ArrowLeft') {
+        e.preventDefault();
+        handleUndo();
+      } else if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        handleReset();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [pos]);
+
   const goToPosition = (id: number) => {
     setSpinning(true);
     setAnalyzing(false);
