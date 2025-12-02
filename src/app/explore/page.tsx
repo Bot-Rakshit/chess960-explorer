@@ -34,8 +34,64 @@ function getFen(game: Chess): string {
 
 function tryMove(game: Chess, from: string, to: string, promotion?: string): { san: string; newGame: Chess } | null {
   try {
-    const uciStr = from + to + (promotion || '');
-    const move = parseUci(uciStr);
+    let uciStr = from + to + (promotion || '');
+    let move = parseUci(uciStr);
+    
+    // If move is not legal, check if it's a Chess960 castling attempt
+    // User might try to move king to g1/c1 (standard destination) instead of to the rook
+    if (!move || !game.isLegal(move)) {
+      const fromFile = from.charCodeAt(0) - 97;
+      const fromRank = parseInt(from[1]);
+      const toFile = to.charCodeAt(0) - 97;
+      const toRank = parseInt(to[1]);
+      
+      // Check if this looks like a castling attempt (king moving 2+ squares or to g/c file)
+      const isKingMove = game.board.get(fromFile + (fromRank - 1) * 8)?.role === 'king';
+      const isFirstRank = (game.turn === 'white' && fromRank === 1) || (game.turn === 'black' && fromRank === 8);
+      
+      if (isKingMove && isFirstRank && fromRank === toRank) {
+        const castlingRank = fromRank;
+        const setup = game.toSetup();
+        
+        // Kingside castling attempt (moving to g-file or beyond king's file towards h)
+        if (toFile > fromFile && (toFile === 6 || toFile === 7)) {
+          // Find the kingside rook
+          for (let f = 7; f > fromFile; f--) {
+            const sq = f + (castlingRank - 1) * 8;
+            const piece = game.board.get(sq);
+            if (piece?.role === 'rook' && piece.color === game.turn) {
+              const rookSquare = String.fromCharCode(97 + f) + castlingRank;
+              const castleUci = from + rookSquare;
+              const castleMove = parseUci(castleUci);
+              if (castleMove && game.isLegal(castleMove)) {
+                move = castleMove;
+                uciStr = castleUci;
+                break;
+              }
+            }
+          }
+        }
+        // Queenside castling attempt (moving to c-file or beyond king's file towards a)
+        else if (toFile < fromFile && (toFile === 2 || toFile <= fromFile - 2)) {
+          // Find the queenside rook
+          for (let f = 0; f < fromFile; f++) {
+            const sq = f + (castlingRank - 1) * 8;
+            const piece = game.board.get(sq);
+            if (piece?.role === 'rook' && piece.color === game.turn) {
+              const rookSquare = String.fromCharCode(97 + f) + castlingRank;
+              const castleUci = from + rookSquare;
+              const castleMove = parseUci(castleUci);
+              if (castleMove && game.isLegal(castleMove)) {
+                move = castleMove;
+                uciStr = castleUci;
+                break;
+              }
+            }
+          }
+        }
+      }
+    }
+    
     if (move && game.isLegal(move)) {
       const san = makeSan(game, move);
       const newGame = game.clone();

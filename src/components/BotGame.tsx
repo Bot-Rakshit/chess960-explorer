@@ -246,10 +246,60 @@ export default function BotGame({ startFen, positionId, onBack }: BotGameProps) 
     }, [gameStarted, result, botReady, currentTurn, playerColor, currentFen, getBotMove, makeMove, whiteTime, blackTime]);
 
     const handleDrop = useCallback((src: string, tgt: string, piece: string): boolean => {
-        if (!isPlayerTurn || result !== "playing" || !gameStarted) return false;
+        if (!isPlayerTurn || result !== "playing" || !gameStarted || !gameRef.current) return false;
 
         const isPromotion = piece[1]?.toLowerCase() === 'p' && (tgt[1] === '8' || tgt[1] === '1');
-        const uci = src + tgt + (isPromotion ? 'q' : '');
+        let uci = src + tgt + (isPromotion ? 'q' : '');
+        
+        // Handle Chess960 castling - user may try to move king to g1/c1 instead of to the rook
+        const game = gameRef.current;
+        let move = parseUci(uci);
+        if (!move || !game.isLegal(move)) {
+            const fromFile = src.charCodeAt(0) - 97;
+            const fromRank = parseInt(src[1]);
+            const toFile = tgt.charCodeAt(0) - 97;
+            const toRank = parseInt(tgt[1]);
+            
+            const isKingMove = game.board.get(fromFile + (fromRank - 1) * 8)?.role === 'king';
+            const isFirstRank = (game.turn === 'white' && fromRank === 1) || (game.turn === 'black' && fromRank === 8);
+            
+            if (isKingMove && isFirstRank && fromRank === toRank) {
+                const castlingRank = fromRank;
+                
+                // Kingside castling attempt
+                if (toFile > fromFile && (toFile === 6 || toFile === 7)) {
+                    for (let f = 7; f > fromFile; f--) {
+                        const sq = f + (castlingRank - 1) * 8;
+                        const p = game.board.get(sq);
+                        if (p?.role === 'rook' && p.color === game.turn) {
+                            const rookSquare = String.fromCharCode(97 + f) + castlingRank;
+                            const castleUci = src + rookSquare;
+                            const castleMove = parseUci(castleUci);
+                            if (castleMove && game.isLegal(castleMove)) {
+                                uci = castleUci;
+                                break;
+                            }
+                        }
+                    }
+                }
+                // Queenside castling attempt
+                else if (toFile < fromFile && (toFile === 2 || toFile <= fromFile - 2)) {
+                    for (let f = 0; f < fromFile; f++) {
+                        const sq = f + (castlingRank - 1) * 8;
+                        const p = game.board.get(sq);
+                        if (p?.role === 'rook' && p.color === game.turn) {
+                            const rookSquare = String.fromCharCode(97 + f) + castlingRank;
+                            const castleUci = src + rookSquare;
+                            const castleMove = parseUci(castleUci);
+                            if (castleMove && game.isLegal(castleMove)) {
+                                uci = castleUci;
+                                break;
+                            }
+                        }
+                    }
+                }
+            }
+        }
         
         return makeMove(uci);
     }, [isPlayerTurn, result, gameStarted, makeMove]);
