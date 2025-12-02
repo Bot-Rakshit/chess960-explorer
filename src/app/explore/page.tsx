@@ -18,6 +18,7 @@ import StatsPanel from "@/components/StatsPanel";
 import GameViewer from "@/components/GameViewer";
 import BotGame from "@/components/BotGame";
 import Loader from "@/components/Loader";
+import { useSound } from "@/hooks/useSound";
 
 function createGame(fen: string): Chess | null {
   try {
@@ -201,6 +202,7 @@ export default function ExplorePage() {
   
   const { lines: engineLines, depth: engineDepth, analyze: runEngine, stop: stopEngine, isReady: engineReady, isThinking, multiPV, setMultiPV } = useStockfish();
   const { getGamesForFen, getPgnForGame, getGameStats, getFreestyleBoards, loading: pgnLoading } = usePgnDatabase();
+  const { play: playSound } = useSound();
 
   // Compute which positions have freestyle games
   const freestylePositionIds = useMemo(() => {
@@ -285,10 +287,30 @@ export default function ExplorePage() {
       setCurrentFen(getFen(result.newGame));
       setMoveHistory(prev => [...prev, result.san]);
       setLastMove({ from: src, to: tgt });
+      
+      // Play sound based on move type
+      const san = result.san;
+      const isCheck = result.newGame.isCheck();
+      const isCapture = san.includes('x');
+      const isCastle = san === 'O-O' || san === 'O-O-O';
+      const isPromotion = san.includes('=');
+      
+      if (isCheck) {
+        playSound('check');
+      } else if (isPromotion) {
+        playSound('promote');
+      } else if (isCastle) {
+        playSound('castle');
+      } else if (isCapture) {
+        playSound('capture');
+      } else {
+        playSound('move');
+      }
+      
       return true;
     }
     return false;
-  }, []);
+  }, [playSound]);
 
   const handleUndo = () => {
     if (historyRef.current.length > 1) {

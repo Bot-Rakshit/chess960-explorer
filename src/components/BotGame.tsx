@@ -7,6 +7,7 @@ import { parseUci, makeSquare } from "chessops/util";
 import { makeSan } from "chessops/san";
 import ChessBoard from "@/components/ChessBoard";
 import { useBot, BotDifficulty } from "@/hooks/useBot";
+import { useSound } from "@/hooks/useSound";
 import { ChevronLeft, RotateCcw, Flag, Handshake, Clock, Bot, User } from "lucide-react";
 
 interface BotGameProps {
@@ -65,6 +66,7 @@ export default function BotGame({ startFen, positionId, onBack }: BotGameProps) 
     const moveHistoryRef = useRef<Chess[]>([]);
     
     const { getBotMove, stop: stopBot, isReady: botReady, isThinking } = useBot(difficulty);
+    const { play: playSound } = useSound();
 
     const currentTurn = useMemo(() => {
         return currentFen.includes(' w ') ? 'white' : 'black';
@@ -136,6 +138,17 @@ export default function BotGame({ startFen, positionId, onBack }: BotGameProps) 
             if (!move || !gameRef.current.isLegal(move)) return false;
 
             const san = makeSan(gameRef.current, move);
+            
+            // Detect move type for sound
+            const isCapture = san.includes('x');
+            const isCastle = san === 'O-O' || san === 'O-O-O';
+            const isPromotion = san.includes('=');
+            
+            // Check if move results in check
+            const gameCopy = gameRef.current.clone();
+            gameCopy.play(move);
+            const isCheck = gameCopy.isCheck();
+            
             moveHistoryRef.current.push(gameRef.current.clone());
             gameRef.current.play(move);
 
@@ -149,6 +162,19 @@ export default function BotGame({ startFen, positionId, onBack }: BotGameProps) 
                 setLastMove({ from, to });
             }
 
+            // Play sound based on move type
+            if (isCheck) {
+                playSound('check');
+            } else if (isPromotion) {
+                playSound('promote');
+            } else if (isCastle) {
+                playSound('castle');
+            } else if (isCapture) {
+                playSound('capture');
+            } else {
+                playSound('move');
+            }
+
             const gameResult = checkGameEnd(gameRef.current);
             if (gameResult !== "playing") {
                 setResult(gameResult);
@@ -158,7 +184,7 @@ export default function BotGame({ startFen, positionId, onBack }: BotGameProps) 
         } catch {
             return false;
         }
-    }, [result, checkGameEnd]);
+    }, [result, checkGameEnd, playSound]);
 
     useEffect(() => {
         if (!gameStarted || result !== "playing" || !botReady) return;
