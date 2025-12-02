@@ -16,6 +16,7 @@ import PositionList from "@/components/PositionList";
 import AnalysisPanel from "@/components/AnalysisPanel";
 import StatsPanel from "@/components/StatsPanel";
 import GameViewer from "@/components/GameViewer";
+import BotGame from "@/components/BotGame";
 import Loader from "@/components/Loader";
 
 function createGame(fen: string): Chess | null {
@@ -196,9 +197,24 @@ export default function ExplorePage() {
   const historyRef = useRef<Chess[]>([]);
 
   const [selectedGame, setSelectedGame] = useState<{ game: GMGame; pgn: string } | null>(null);
+  const [playingBot, setPlayingBot] = useState(false);
   
   const { lines: engineLines, depth: engineDepth, analyze: runEngine, stop: stopEngine, isReady: engineReady, isThinking, multiPV, setMultiPV } = useStockfish();
-  const { getGamesForFen, getPgnForGame, getGameStats, loading: pgnLoading } = usePgnDatabase();
+  const { getGamesForFen, getPgnForGame, getGameStats, getFreestyleBoards, loading: pgnLoading } = usePgnDatabase();
+
+  // Compute which positions have freestyle games
+  const freestylePositionIds = useMemo(() => {
+    if (pgnLoading || positions.length === 0) return new Set<number>();
+    const freestyleBoards = getFreestyleBoards();
+    const ids = new Set<number>();
+    for (const p of positions) {
+      const board = p.fen.split(" ")[0];
+      if (freestyleBoards.has(board)) {
+        ids.add(p.id);
+      }
+    }
+    return ids;
+  }, [positions, pgnLoading, getFreestyleBoards]);
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -321,6 +337,17 @@ export default function ExplorePage() {
     );
   }
 
+  // --- Bot Game Mode ---
+  if (playingBot && pos) {
+    return (
+      <BotGame
+        startFen={pos.fen}
+        positionId={pos.id}
+        onBack={() => setPlayingBot(false)}
+      />
+    );
+  }
+
   const digits = currentId.toString().padStart(3, '0').split('');
 
   const displayLines = analyzing && engineLines.length > 0
@@ -395,6 +422,7 @@ export default function ExplorePage() {
             allTags={allTags}
             sharpnessData={sharpnessData}
             meanSharpness={meanSharpness}
+            freestylePositionIds={freestylePositionIds}
           />
         </aside>
 
@@ -427,6 +455,12 @@ export default function ExplorePage() {
                 className="px-4 py-2 rounded-lg bg-accent text-background font-medium text-sm hover:opacity-90"
               >
                 Random
+              </button>
+              <button 
+                onClick={() => setPlayingBot(true)} 
+                className="px-4 py-2 rounded-lg bg-emerald-600 text-white font-medium text-sm hover:bg-emerald-500 transition-colors"
+              >
+                Play Bot
               </button>
             </div>
 

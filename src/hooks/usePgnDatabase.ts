@@ -135,10 +135,22 @@ export function usePgnDatabase() {
     [db]
   );
 
+  const getFreestyleBoards = useCallback((): Set<string> => {
+    if (!db) return new Set();
+    const boards = new Set<string>();
+    for (const [board, games] of Object.entries(db.gamesByBoard)) {
+      if (games.some(g => g.event.toLowerCase().includes("freestyle"))) {
+        boards.add(board);
+      }
+    }
+    return boards;
+  }, [db]);
+
   return {
     loading,
     getGamesForFen,
     getPgnForGame,
     getGameStats,
+    getFreestyleBoards,
   };
 }

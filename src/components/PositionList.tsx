@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo } from "react";
+import Image from "next/image";
 import { Position } from "@/types";
 
 const tagStyles: Record<string, string> = {
@@ -54,6 +55,7 @@ interface PositionListProps {
   allTags: string[];
   sharpnessData?: SharpnessData;
   meanSharpness?: number;
+  freestylePositionIds?: Set<number>;
 }
 
 export default function PositionList({
@@ -71,6 +73,7 @@ export default function PositionList({
   allTags,
   sharpnessData = {},
   meanSharpness = 0,
+  freestylePositionIds = new Set(),
 }: PositionListProps) {
 
   const filtered = useMemo(() => {
@@ -210,6 +213,11 @@ export default function PositionList({
                   <span className={`font-mono text-sm ${isSelected ? 'text-accent font-semibold' : 'text-creme'}`}>
                     #{p.id}
                   </span>
+                  {freestylePositionIds.has(p.id) && (
+                    <div className="relative w-4 h-4 rounded-sm overflow-hidden shrink-0" title="Played in Freestyle Chess">
+                      <Image src="/freestyle.jpeg" alt="Freestyle" fill className="object-cover" />
+                    </div>
+                  )}
                   {p.gmStats && p.gmStats.totalGames > 0 && (
                     <span className="text-xs px-1.5 py-0.5 rounded bg-white/5 text-creme-muted">
                       {p.gmStats.totalGames}g

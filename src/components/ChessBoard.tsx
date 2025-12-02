@@ -245,21 +245,43 @@ export default function ChessBoard({
     return false;
   }, [pendingMove, onPieceDrop]);
 
+  // Find king square if in check
+  const checkSquare = useMemo(() => {
+    const game = createGame(fen);
+    if (!game || !game.isCheck()) return null;
+    
+    const turn = game.turn;
+    const kingRole = 'king';
+    for (let sq = 0; sq < 64; sq++) {
+      const piece = game.board.get(sq);
+      if (piece && piece.role === kingRole && piece.color === turn) {
+        return makeSquare(sq) as Square;
+      }
+    }
+    return null;
+  }, [fen]);
+
   // Build custom square styles
   const customSquareStyles = useMemo(() => {
     const styles: Record<string, React.CSSProperties> = {};
     
-    // Last move highlight
+    // Last move highlight - use background shorthand consistently
     if (lastMove) {
-      styles[lastMove.from] = { backgroundColor: 'rgba(180, 150, 90, 0.5)' };
-      styles[lastMove.to] = { backgroundColor: 'rgba(180, 150, 90, 0.6)' };
+      styles[lastMove.from] = { background: 'rgba(180, 150, 90, 0.5)' };
+      styles[lastMove.to] = { background: 'rgba(180, 150, 90, 0.6)' };
+    }
+    
+    // Check highlight - red king square
+    if (checkSquare) {
+      styles[checkSquare] = { 
+        background: 'radial-gradient(ellipse at center, rgba(255, 0, 0, 0.8) 0%, rgba(255, 0, 0, 0.5) 40%, rgba(255, 0, 0, 0.2) 70%, transparent 100%)'
+      };
     }
     
     // Selected square highlight
     if (selectedSquare) {
       styles[selectedSquare] = { 
-        ...styles[selectedSquare],
-        backgroundColor: 'rgba(255, 255, 0, 0.4)' 
+        background: 'rgba(255, 255, 0, 0.4)' 
       };
     }
     
@@ -269,14 +291,12 @@ export default function ChessBoard({
       if (hasCapture) {
         // Capture square - ring highlight
         styles[sq] = { 
-          ...styles[sq],
           background: 'radial-gradient(transparent 0%, transparent 79%, rgba(0,0,0,0.3) 80%)',
           borderRadius: '50%'
         };
       } else {
         // Empty square - dot
         styles[sq] = { 
-          ...styles[sq],
           background: 'radial-gradient(rgba(0,0,0,0.25) 20%, transparent 20%)',
         };
       }
@@ -291,7 +311,7 @@ export default function ChessBoard({
     });
     
     return styles;
-  }, [lastMove, selectedSquare, legalMoves, highlightSquares, fen, hasPieceAt]);
+  }, [lastMove, selectedSquare, legalMoves, highlightSquares, fen, hasPieceAt, checkSquare]);
 
   return (
     <div className="w-full h-full">
