@@ -362,11 +362,13 @@ export default function ExplorePage() {
   // --- Bot Game Mode ---
   if (playingBot && pos) {
     return (
-      <BotGame
-        startFen={pos.fen}
-        positionId={pos.id}
-        onBack={() => setPlayingBot(false)}
-      />
+      <div className="h-screen bg-background">
+        <BotGame
+          startFen={pos.fen}
+          positionId={pos.id}
+          onBack={() => setPlayingBot(false)}
+        />
+      </div>
     );
   }
 
