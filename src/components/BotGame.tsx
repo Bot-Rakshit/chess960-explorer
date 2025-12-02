@@ -427,14 +427,18 @@ export default function BotGame({ startFen, positionId, onBack }: BotGameProps) 
                 )}
             </div>
 
-            <div className="flex-1 flex overflow-hidden">
-                <div className="flex-1 flex flex-col items-center justify-center p-4 bg-black/20">
-                    <div className={`w-full max-w-[100px] sm:max-w-[120px] mb-2 flex items-center justify-between px-3 py-2 rounded-lg ${
+            <div className="flex-1 flex flex-col lg:flex-row overflow-hidden">
+                <div className="flex-1 flex flex-col items-center justify-center p-2 sm:p-4 bg-black/20">
+                    {/* Bot info bar */}
+                    <div className={`w-full max-w-[320px] sm:max-w-[400px] mb-2 flex items-center justify-between px-3 py-2 rounded-lg ${
                         currentTurn !== playerColor ? 'bg-accent/20 border border-accent/30' : 'bg-surface border border-white/10'
                     }`}>
                         <div className="flex items-center gap-2">
                             <Bot size={16} className="text-creme-muted" />
                             <span className="text-sm font-medium text-creme">Bot</span>
+                            {isThinking && result === "playing" && (
+                                <span className="text-xs text-accent ml-2">thinking...</span>
+                            )}
                         </div>
                         <div className={`font-mono text-sm font-bold ${
                             (playerColor === "white" ? blackTime : whiteTime) < 60 ? 'text-rose-400' : 'text-creme'
@@ -443,7 +447,8 @@ export default function BotGame({ startFen, positionId, onBack }: BotGameProps) 
                         </div>
                     </div>
 
-                    <div className="w-full max-w-[500px] aspect-square shadow-2xl shadow-black/50">
+                    {/* Chess board */}
+                    <div className="w-full max-w-[320px] sm:max-w-[400px] lg:max-w-[500px] aspect-square">
                         <ChessBoard
                             fen={currentFen}
                             onPieceDrop={handleDrop}
@@ -453,7 +458,8 @@ export default function BotGame({ startFen, positionId, onBack }: BotGameProps) 
                         />
                     </div>
 
-                    <div className={`w-full max-w-[100px] sm:max-w-[120px] mt-2 flex items-center justify-between px-3 py-2 rounded-lg ${
+                    {/* Player info bar */}
+                    <div className={`w-full max-w-[320px] sm:max-w-[400px] mt-2 flex items-center justify-between px-3 py-2 rounded-lg ${
                         currentTurn === playerColor ? 'bg-accent/20 border border-accent/30' : 'bg-surface border border-white/10'
                     }`}>
                         <div className="flex items-center gap-2">
@@ -466,15 +472,48 @@ export default function BotGame({ startFen, positionId, onBack }: BotGameProps) 
                             {formatTime(playerColor === "white" ? whiteTime : blackTime)}
                         </div>
                     </div>
+                    
+                    {/* Mobile controls */}
+                    <div className="lg:hidden w-full max-w-[320px] sm:max-w-[400px] mt-4">
+                        {result === "playing" ? (
+                            <div className="grid grid-cols-3 gap-2">
+                                <button
+                                    onClick={handleResign}
+                                    className="flex items-center justify-center gap-2 py-2 rounded-lg bg-rose-500/10 border border-rose-500/20 text-rose-400 hover:bg-rose-500/20 transition-colors"
+                                >
+                                    <Flag size={14} />
+                                    <span className="text-xs">Resign</span>
+                                </button>
+                                <button
+                                    onClick={handleOfferDraw}
+                                    disabled={drawOffered}
+                                    className="flex items-center justify-center gap-2 py-2 rounded-lg bg-white/5 border border-white/10 text-creme-muted hover:text-creme transition-colors disabled:opacity-50"
+                                >
+                                    <Handshake size={14} />
+                                    <span className="text-xs">{drawOffered ? 'Declined' : 'Draw'}</span>
+                                </button>
+                                <button
+                                    onClick={handleTakeback}
+                                    disabled={takebackUsed || moves.length < 2}
+                                    className="flex items-center justify-center gap-2 py-2 rounded-lg bg-white/5 border border-white/10 text-creme-muted hover:text-creme transition-colors disabled:opacity-50"
+                                >
+                                    <RotateCcw size={14} />
+                                    <span className="text-xs">{takebackUsed ? 'Used' : 'Undo'}</span>
+                                </button>
+                            </div>
+                        ) : (
+                            <button
+                                onClick={handleNewGame}
+                                className="w-full py-3 rounded-lg bg-accent text-background font-bold text-sm uppercase tracking-wider hover:opacity-90 transition-opacity"
+                            >
+                                New Game
+                            </button>
+                        )}
+                    </div>
                 </div>
 
-                <div className="w-72 lg:w-80 flex-shrink-0 flex flex-col border-l border-white/10 bg-surface">
-                    {isThinking && result === "playing" && (
-                        <div className="px-4 py-2 bg-accent/10 border-b border-white/10 flex items-center gap-2">
-                            <div className="w-2 h-2 bg-accent rounded-full animate-pulse" />
-                            <span className="text-xs text-accent">Bot is thinking...</span>
-                        </div>
-                    )}
+                {/* Sidebar - hidden on mobile */}
+                <div className="hidden lg:flex w-72 lg:w-80 flex-shrink-0 flex-col border-l border-white/10 bg-surface">
 
                     <div className="flex-1 overflow-y-auto custom-scrollbar p-4">
                         <div className="text-xs text-creme-muted uppercase tracking-wider mb-3">Moves</div>
